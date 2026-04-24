@@ -1,0 +1,18 @@
+{
+  "projects": {
+    "default": "vocab-adventure-d6a5a"
+  },
+  "targets": {
+    "vocab-adventure-d6a5a": {
+      "hosting": {
+        "testing": [
+          "vocab-adventure-d6a5a"
+        ],
+        "prod": [
+          "vocab-advent"
+        ]
+      }
+    }
+  },
+  "etags": {}
+}

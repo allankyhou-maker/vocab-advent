@@ -1,0 +1,1319 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>單字大冒險</title>
+    
+    <link rel="manifest" href="./manifest.json">
+    <meta name="mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <meta name="apple-mobile-web-app-title" content="單字大冒險">
+    <link rel="apple-touch-icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>🌟</text></svg>">
+    <link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>🌟</text></svg>">
+    
+    <style>
+        body { font-family: 'Comic Sans MS', 'Arial', sans-serif; background-color: #f0f8ff; display: flex; flex-direction: column; align-items: center; padding: 15px; color: #333; margin: 0; min-height: 100vh; justify-content: center; overflow: hidden; }
+        h1 { color: #ff6b6b; text-align: center; font-size: 30px; margin-top: 0; margin-bottom: 15px; flex-shrink: 0; }
+        
+        .screen { 
+            position: relative; background: white; padding: 25px 20px; border-radius: 20px; 
+            box-shadow: 0 10px 20px rgba(0,0,0,0.1); max-width: 600px; width: 100%; 
+            text-align: center; display: none; 
+            height: 88vh; max-height: 850px; 
+            flex-direction: column; box-sizing: border-box;
+        }
+        .active-screen { display: flex; }
+        
+        .flex-grow-center { flex-grow: 1; display: flex; flex-direction: column; justify-content: flex-start; align-items: center; overflow-y: auto; width: 100%; padding-top: 5vh; }
+        .flex-grow-top { flex-grow: 1; display: flex; flex-direction: column; align-items: center; overflow-y: auto; width: 100%; padding: 5px 0; }
+        .bottom-dock { margin-top: 20px; width: 100%; flex-shrink: 0; padding-top: 10px; padding-bottom: 20px; }
+
+        .start-btn { background-color: #ff6b6b; color: white; border: none; padding: 18px 30px; font-size: 26px; border-radius: 50px; cursor: pointer; box-shadow: 0 8px 0 #e84118; font-weight: bold; transition: transform 0.1s; animation: pulse 2s infinite; margin-bottom: 15px; width: 90%; }
+        .start-btn:active { transform: translateY(8px); box-shadow: 0 0 0 #e84118; }
+        .start-btn:disabled { background-color: #bdc3c7; box-shadow: none; animation: none; cursor: not-allowed; }
+        
+        .setting-btn { background-color: #feca57; color: #835100; border: none; padding: 15px 20px; font-size: 22px; border-radius: 20px; cursor: pointer; box-shadow: 0 5px 0 #d99a29; font-weight: bold; transition: transform 0.1s; margin-bottom: 15px; width: 90%; }
+        .setting-btn:active { transform: translateY(5px); box-shadow: 0 0 0 #d99a29; }
+        @keyframes pulse { 0% { transform: scale(1); } 50% { transform: scale(1.05); } 100% { transform: scale(1); } }
+        
+        .install-btn { background: linear-gradient(135deg, #a29bfe, #6c5ce7); color: white; border: none; padding: 12px 25px; font-size: 1.2rem; border-radius: 25px; font-weight: bold; cursor: pointer; box-shadow: 0 5px 0 #5f27cd, 0 0 15px rgba(108, 92, 231, 0.4); margin-bottom: 15px; transition: transform 0.1s; animation: pulse-glow-purple 2s infinite; width: 90%; box-sizing: border-box; }
+        .install-btn:active { transform: translateY(5px); box-shadow: 0 0 0 #5f27cd; }
+        @keyframes pulse-glow-purple { 0%, 100% { box-shadow: 0 5px 0 #5f27cd, 0 0 15px rgba(108, 92, 231, 0.4); } 50% { box-shadow: 0 5px 0 #5f27cd, 0 0 25px rgba(108, 92, 231, 0.8); } }
+
+        .cross-promo-container { display: flex; flex-direction: column; align-items: center; gap: 10px; margin-top: 5px; width: 100%; flex-shrink: 0; }
+        .coffee-btn { background-color: #ff9f43; color: white; border: none; padding: 10px 20px; font-size: 16px; border-radius: 12px; cursor: pointer; box-shadow: 0 4px 0 #e15f41; font-weight: bold; transition: transform 0.1s; display: inline-flex; align-items: center; justify-content: center; gap: 8px; text-decoration: none; width: 80%; box-sizing: border-box; }
+        .coffee-btn:active { transform: translateY(4px); box-shadow: 0 0 0 #e15f41; }
+        .btn-math { background: linear-gradient(135deg, #06d6a0, #04a77b); color: #2a1b38 !important; border: none; padding: 10px 20px; font-size: 16px; border-radius: 12px; cursor: pointer; box-shadow: 0 4px 0 #038d68; font-weight: bold; transition: transform 0.1s; display: inline-flex; align-items: center; justify-content: center; gap: 8px; text-decoration: none; width: 80%; box-sizing: border-box;}
+        .btn-math:active { transform: translateY(4px); box-shadow: 0 0 0 #038d68; }
+
+        .adv-btn { background-color: #9b59b6; color: white; box-shadow: 0 5px 0 #8e44ad; }
+        .adv-btn:active { transform: translateY(5px); box-shadow: 0 0 0 #8e44ad; }
+        .mode-section { background: #f8f9fa; padding: 15px; border-radius: 15px; margin-bottom: 15px; width: 100%; box-sizing: border-box;}
+        .mode-section h3 { margin-top: 0; color: #2c3e50; font-size: 20px; margin-bottom: 10px; }
+        
+        .toggle-container { display: flex; justify-content: center; border-radius: 12px; overflow: hidden; border: 2px solid #3498db; margin-bottom: 12px; width: 100%; flex-shrink: 0; box-sizing: border-box;}
+        .toggle-btn { flex: 1; padding: 10px 0; font-size: 18px; font-weight: bold; border: none; cursor: pointer; transition: all 0.2s; }
+        .active-toggle { background-color: #3498db; color: white; }
+        .inactive-toggle { background-color: #ecf0f1; color: #7f8c8d; }
+        .seq-input-container { display: flex; justify-content: center; align-items: center; gap: 10px; margin-bottom: 10px; }
+        .seq-input { width: 70px; padding: 8px; font-size: 20px; border: 2px solid #bdc3c7; border-radius: 10px; text-align: center; font-weight: bold; color: #2c3e50;}
+        .seq-input:focus { border-color: #3498db; outline: none; }
+        .quit-btn { position: absolute; top: 15px; right: 15px; background-color: #ff7675; color: white; border: none; border-radius: 12px; padding: 8px 12px; font-size: 16px; font-weight: bold; cursor: pointer; box-shadow: 0 4px 0 #d63031; transition: transform 0.1s; display: flex; align-items: center; gap: 5px; z-index: 10;}
+        .quit-btn:active { transform: translateY(4px); box-shadow: 0 0 0 #d63031; }
+        .question-count-container { display: flex; justify-content: center; gap: 10px; }
+        .count-btn { background-color: #ecf0f1; color: #7f8c8d; border: none; padding: 10px 15px; font-size: 20px; border-radius: 12px; cursor: pointer; transition: 0.2s; box-shadow: 0 4px 0 #bdc3c7; font-weight: bold; flex-grow: 1;}
+        .count-btn:active { transform: translateY(4px); box-shadow: 0 0 0 #bdc3c7; }
+        .progress-bar { font-size: 20px; color: #0984e3; font-weight: bold; margin-bottom: 10px; background: #dfe6e9; padding: 5px 15px; border-radius: 20px; display: inline-block; flex-shrink: 0; }
+        
+        .question-area { font-size: clamp(35px, 8vw, 50px); margin: 0; letter-spacing: 5px; flex-shrink: 0; }
+        rt { font-size: 18px; color: #555; font-weight: normal; }
+        
+        .options-container { display: flex; flex-direction: column; gap: 12px; width: 100%; box-sizing: border-box; }
+        .bank-option-btn { background-color: #4ecdc4; color: white; border: none; padding: 15px 10px; font-size: 22px; border-radius: 15px; cursor: pointer; box-shadow: 0 5px 0 #3b9f98; transition: transform 0.1s; white-space: nowrap; overflow: hidden; width: 100%; box-sizing: border-box; flex-shrink: 0;}
+        .bank-option-btn:active { transform: translateY(5px); box-shadow: 0 0 0 #3b9f98; }
+        .option-row { display: flex; gap: 10px; width: 100%; align-items: center; }
+        .option-btn { flex-grow: 1; background-color: #4ecdc4; color: white; border: none; padding: 15px 10px; font-size: clamp(18px, 5vw, 24px); border-radius: 15px; cursor: pointer; box-shadow: 0 5px 0 #3b9f98; transition: transform 0.1s; }
+        .option-btn:active { transform: translateY(5px); box-shadow: 0 0 0 #3b9f98; }
+        
+        .keyboard { display: flex; flex-direction: column; align-items: center; gap: 6px; width: 100%; box-sizing: border-box; }
+        .keyboard-row { display: flex; justify-content: center; gap: 4px; width: 100%; }
+        .key { background-color: #ffe66d; color: #d35400; font-weight: bold; height: 45px; width: calc(10% - 4px); max-width: 45px; font-size: 18px; border-radius: 8px; border: none; cursor: pointer; box-shadow: 0 4px 0 #f1c40f; transition: transform 0.1s; display: flex; justify-content: center; align-items: center; padding: 0; box-sizing: border-box; }
+        .key:active { transform: translateY(4px); box-shadow: 0 0 0 #f1c40f; }
+        .space-btn { width: 50% !important; max-width: 250px !important; font-size: 16px !important; letter-spacing: 2px; }
+        
+        .spelling-container { display: flex; flex-direction: column; align-items: center; gap: 15px; width: 100%; overflow: hidden; margin-bottom: 10px; flex-shrink: 0; }
+        .spelling-area { font-size: clamp(22px, 6vw, 45px); letter-spacing: 6px; font-weight: bold; color: #2c3e50; margin: 0; white-space: nowrap; }
+        .tools-container { display: flex; gap: 15px; justify-content: center; }
+        .tool-btn { color: white; border: none; border-radius: 50%; width: 45px; height: 45px; font-size: 22px; cursor: pointer; display: flex; justify-content: center; align-items: center; transition: transform 0.1s; flex-shrink: 0; }
+        .speak-btn { background-color: #a29bfe; box-shadow: 0 4px 0 #6c5ce7; }
+        .speak-btn:active { transform: translateY(4px); box-shadow: 0 0 0 #6c5ce7; }
+        .clear-btn { background-color: #95a5a6; box-shadow: 0 4px 0 #7f8c8d; }
+        .clear-btn:active { transform: translateY(4px); box-shadow: 0 0 0 #7f8c8d; }
+        .hint-btn { background-color: #f1c40f; box-shadow: 0 4px 0 #f39c12; }
+        .hint-btn:active { transform: translateY(4px); box-shadow: 0 0 0 #f39c12; }
+        
+        .message { font-size: 20px; color: #ff6b6b; font-weight: bold; min-height: 30px; margin-top: 10px; flex-shrink: 0; display: flex; align-items: center; justify-content: center; }
+        
+        .stars-container { display: flex; flex-wrap: wrap; justify-content: center; gap: 10px; margin: 15px 0; min-height: 50px; flex-shrink: 0;}
+        .star-svg { width: 40px; height: 40px; opacity: 0; transform: scale(0); }
+        .star-svg.pop { animation: popIn 0.5s cubic-bezier(0.175, 0.885, 0.32, 1.275) forwards; }
+        @keyframes popIn { 0% { opacity: 0; transform: scale(0) rotate(-45deg); } 80% { transform: scale(1.2) rotate(10deg); } 100% { opacity: 1; transform: scale(1) rotate(0deg); } }
+        .equation-box { background: #f1f2f6; padding: 15px; border-radius: 15px; font-size: 18px; color: #2f3640; font-weight: bold; margin: 10px 0; white-space: pre-line; line-height: 1.5; flex-shrink: 0;}
+        .restart-btn { background-color: #4ecdc4; color: white; border: none; padding: 15px 20px; font-size: 22px; border-radius: 15px; cursor: pointer; box-shadow: 0 5px 0 #3b9f98; margin-top: 5px; width: 100%; box-sizing: border-box; font-weight: bold; }
+        .restart-btn:active { transform: translateY(5px); box-shadow: 0 0 0 #3b9f98; }
+        
+        .bank-info { font-size: 16px; color: #34495e; font-weight: bold; margin-bottom: 15px; background: #fff3cd; padding: 8px 15px; border-radius: 10px; display: inline-block; flex-shrink: 0;}
+        
+        .review-list-container { display: flex; flex-direction: column; gap: 10px; width: 100%; text-align: left; padding-right: 5px; }
+        .review-item { display: flex; justify-content: space-between; align-items: center; background: #f8f9fa; padding: 12px 15px; border-radius: 15px; border-left: 6px solid #ff6b6b; font-size: 20px; font-weight: bold; box-shadow: 0 3px 6px rgba(0,0,0,0.05); flex-shrink: 0;}
+        .review-item-zh { color: #2d3436; display: flex; align-items: center; gap: 5px;}
+        .review-item-zh rt { font-size: 12px; }
+        .review-item-en { color: #0984e3; letter-spacing: 1px; }
+
+        .status-btn { position: absolute; top: 15px; right: 15px; background: transparent; border: none; font-size: 24px; cursor: pointer; transition: transform 0.2s; z-index: 10; padding: 0; }
+        .status-btn:hover { transform: scale(1.1); }
+        .modal-overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.6); display: none; justify-content: center; align-items: center; z-index: 100; backdrop-filter: blur(3px); }
+        .modal-content { background: white; padding: 30px; border-radius: 20px; width: 85%; max-width: 400px; text-align: center; box-shadow: 0 10px 25px rgba(0,0,0,0.2); }
+        .modal-content h2 { color: #2c3e50; margin-top: 0; font-size: 22px;}
+        .modal-content p { color: #555; font-size: 16px; line-height: 1.6; margin-bottom: 20px; }
+        .google-btn { background-color: #4285F4; color: white; border: none; padding: 12px 20px; font-size: 16px; border-radius: 12px; cursor: pointer; box-shadow: 0 4px 0 #2b61b6; font-weight: bold; width: 100%; margin-bottom: 10px; display: flex; align-items: center; justify-content: center; gap: 10px; transition: transform 0.1s; }
+        .google-btn:active { transform: translateY(4px); box-shadow: 0 0 0 #2b61b6; }
+        .close-modal-btn { background-color: #ecf0f1; color: #7f8c8d; border: none; padding: 12px 20px; font-size: 16px; border-radius: 12px; cursor: pointer; font-weight: bold; width: 100%; transition: transform 0.1s;}
+        .close-modal-btn:active { transform: translateY(2px); box-shadow: none; }
+        .edit-name-btn { background-color: #f1f2f6; color: #2c3e50; border: 2px solid #dfe6e9; border-radius: 15px; padding: 4px 10px; font-size: 12px; font-weight: bold; cursor: pointer; margin-left: 10px; box-shadow: 0 3px 0 #b2bec3; transition: transform 0.1s; vertical-align: middle; }
+        .edit-name-btn:active { transform: translateY(3px); box-shadow: 0 0 0 #b2bec3; }
+
+        .hidden { display: none !important; }
+        .overlay { position: fixed; top: 0; left: 0; width: 100vw; height: 100vh; background-color: rgba(0, 0, 0, 0.75); backdrop-filter: blur(3px); display: flex; justify-content: center; align-items: center; z-index: 9999; }
+        .ios-instruction-box { background-color: #1f2833; border: 2px solid #45a29e; padding: 20px; border-radius: 15px; width: 85%; max-width: 320px; text-align: center; box-shadow: 0 10px 30px rgba(0,0,0,0.8); }
+    </style>
+</head>
+<body>
+    <svg width="0" height="0" style="position:absolute">
+        <defs>
+            <linearGradient id="half-star-gradient" x1="0" x2="1" y1="0" y2="0">
+                <stop offset="50%" stop-color="#ffca28" />
+                <stop offset="50%" stop-color="#ecf0f1" />
+            </linearGradient>
+        </defs>
+    </svg>
+
+    <div id="start-screen" class="screen active-screen">
+        <button id="account-status-btn" class="status-btn" onclick="window.showAccountModal()">☁️💻</button>
+        <h1>🌟 單字大冒險 🌟</h1>
+        <h2 id="greeting-text" style="color: #34495e; font-size: 20px; display: none; margin-top: -5px; flex-shrink: 0;"></h2>
+        <div id="current-bank-display" class="bank-info">題庫載入中...</div>
+        
+        <div class="flex-grow-center">
+            <button class="start-btn" id="main-start-btn" onclick="window.showModeScreen()" disabled>開始遊戲</button>
+            <button class="setting-btn" onclick="window.showBankScreen()">選擇挑戰單字庫</button>
+            <div style="margin-top: 15px; margin-bottom: 15px; width: 100%; text-align: center;">
+                <a href="#" id="force-update-link" onclick="window.forceUpdate(); return false;" style="font-size: 14px; color: #95a5a6; text-decoration: underline;">遇到問題？強制重新整理系統</a>
+            </div>
+            <button id="install-pwa-btn" class="install-btn hidden">📲 下載成為 APP</button>
+        </div>
+        
+        <div class="bottom-dock">
+            <div class="cross-promo-container">
+                <a href="https://math-advent.web.app/?utm_source=vocab_adventure&utm_medium=lobby_cross_promo&utm_campaign=internal_traffic" class="btn-math" id="go-to-math-btn">👾 前往數學大冒險 ➕</a>
+                <a href="https://portaly.cc/allankyhou/support" class="coffee-btn" id="coffee-btn" target="_blank">☕ 請作者喝杯咖啡</a>
+            </div>
+        </div>
+    </div>
+
+    <div id="mode-screen" class="screen">
+        <h1>選擇模式</h1>
+        
+        <div class="toggle-container" style="border-color: #e67e22; border-width: 3px;">
+            <button id="toggle-main-flashcard" class="toggle-btn active-toggle" style="background-color: #e67e22; color: white;" onclick="window.switchMainMode('flashcard')">📖 翻牌複習</button>
+            <button id="toggle-main-challenge" class="toggle-btn inactive-toggle" onclick="window.switchMainMode('challenge')">⚔️ 挑戰模式</button>
+        </div>
+
+        <div id="difficulty-section" class="toggle-container" style="border-color: #9b59b6;">
+            <button id="toggle-normal" class="toggle-btn active-toggle" style="background-color: #9b59b6; color: white;" onclick="window.switchDifficulty('normal')">🌟 有提示 (一般)</button>
+            <button id="toggle-adv" class="toggle-btn inactive-toggle" onclick="window.switchDifficulty('advanced')">👑 隱藏字母 (進階)</button>
+        </div>
+
+        <div class="flex-grow-top">
+            <div class="mode-section" style="margin-bottom: 15px;">
+                <h3 id="seq-review-title">📖 依序挑戰</h3>
+                <p style="font-size: 14px; color: #7f8c8d; margin-top: 0;">請輸入要出題的單字編號：</p>
+                <div class="seq-input-container">
+                    <input type="number" id="seq-start" class="seq-input" min="1" placeholder="起">
+                    <span style="font-size: 18px; font-weight: bold; color: #555;">到</span>
+                    <input type="number" id="seq-end" class="seq-input" min="1" placeholder="迄">
+                </div>
+                <button id="start-seq-btn" class="setting-btn" style="background-color: #3498db; color: white; box-shadow: 0 5px 0 #2980b9; width: 100%; margin-bottom: 0;" onclick="window.startSequentialSession()">開始挑戰</button>
+            </div>
+
+            <div class="mode-section" style="margin-bottom: 15px;">
+                <h3 id="random-mode-title">🎲 隨機挑戰</h3>
+                <div class="toggle-container">
+                    <button id="toggle-all" class="toggle-btn active-toggle" onclick="window.switchRandomMode('all')">所有題庫</button>
+                    <button id="toggle-range" class="toggle-btn inactive-toggle" onclick="window.switchRandomMode('range')">限定區間</button>
+                </div>
+                <div id="random-range-container" class="seq-input-container hidden">
+                    <input type="number" id="rand-start" class="seq-input" min="1" placeholder="起">
+                    <span style="font-size: 18px; font-weight: bold; color: #555;">到</span>
+                    <input type="number" id="rand-end" class="seq-input" min="1" placeholder="迄">
+                </div>
+                <div class="question-count-container">
+                    <button class="count-btn" onclick="window.startRandomSession(3)">3 題</button>
+                    <button class="count-btn" onclick="window.startRandomSession(5)">5 題</button>
+                    <button class="count-btn" onclick="window.startRandomSession(7)">7 題</button>
+                </div>
+            </div>
+            
+            <div class="mode-section" style="margin-bottom: 0;">
+                <h3 id="smart-mode-title">✨ 智能出題</h3>
+                <div class="toggle-container" style="border-color: #f1c40f; border-width: 2px;">
+                    <button id="toggle-smart-fresh" class="toggle-btn active-toggle" style="background-color: #f1c40f; color: #835100;" onclick="window.switchSmartMode('fresh')">✨ 來點新鮮的</button>
+                    <button id="toggle-smart-review" class="toggle-btn inactive-toggle" onclick="window.switchSmartMode('review')">🧠 複習不熟的</button>
+                </div>
+                <div class="question-count-container">
+                    <button class="count-btn" onclick="window.startSmartSession(3)">3 題</button>
+                    <button class="count-btn" onclick="window.startSmartSession(5)">5 題</button>
+                    <button class="count-btn" onclick="window.startSmartSession(7)">7 題</button>
+                </div>
+            </div>
+        </div>  
+        
+        <div class="bottom-dock">
+            <button class="restart-btn" style="background-color: #95a5a6; box-shadow: 0 5px 0 #7f8c8d; margin: 0;" onclick="window.showStartScreen()">返回主畫面</button>
+        </div>
+    </div>
+
+    <div id="bank-screen" class="screen">
+        <h1>📚 選擇題庫</h1>
+        <p style="font-size: 16px; color: #555; margin-bottom: 15px; flex-shrink: 0;">請選擇今天要挑戰的單字範圍：</p>
+        <div class="flex-grow-top" id="bank-list" style="gap: 12px;"></div>
+        <div class="bottom-dock">
+            <button class="restart-btn" style="background-color: #95a5a6; box-shadow: 0 5px 0 #7f8c8d; margin: 0;" onclick="window.showStartScreen()">返回主畫面</button>
+        </div>
+    </div>
+
+    <div id="game-screen" class="screen">
+        <button class="quit-btn" onclick="window.quitGame()">🚪</button>
+        <div id="progress" class="progress-bar">第 1 題</div>
+        
+        <div class="flex-grow-center">
+            <div id="chinese-word" class="question-area"></div>
+            
+            <div id="flashcard-question-area" class="hidden" style="display: flex; align-items: center; justify-content: flex-start; gap: 10px; flex-direction: column;">
+                <div style="display: flex; align-items: center; justify-content: center; gap: 15px;">
+                    <div id="flashcard-english" style="font-size: clamp(40px, 10vw, 55px); font-weight: bold; color: #2c3e50; letter-spacing: 2px;"></div>
+                    <button class="tool-btn speak-btn" onclick="window.playFlashcardAudio()" title="聽發音">🔊</button>
+                </div>
+                <div id="flashcard-chinese" class="hidden" style="font-size: clamp(26px, 6vw, 35px); margin-top: 10px; color: #e67e22; font-weight: bold;"></div>
+            </div>
+        </div>
+        
+        <div class="bottom-dock">
+            <div id="stage1" class="options-container">
+                <div id="opt-row-0" class="option-row">
+                    <button class="option-btn" onclick="window.checkStage1(0)" id="opt0"></button>
+                    <button class="tool-btn speak-btn" onclick="window.playOptionAudio(0)">🔊</button>
+                </div>
+                <div id="opt-row-1" class="option-row">
+                    <button class="option-btn" onclick="window.checkStage1(1)" id="opt1"></button>
+                    <button class="tool-btn speak-btn" onclick="window.playOptionAudio(1)">🔊</button>
+                </div>
+                <div id="opt-row-2" class="option-row">
+                    <button class="option-btn" onclick="window.checkStage1(2)" id="opt2"></button>
+                    <button class="tool-btn speak-btn" onclick="window.playOptionAudio(2)">🔊</button>
+                </div>
+            </div>
+
+            <div id="stage2" class="hidden">
+                <div class="spelling-container">
+                    <div id="spelling-display" class="spelling-area"></div>
+                    <div class="tools-container">
+                        <button class="tool-btn speak-btn" onclick="window.playWordAudio()">🔊</button>
+                        <button class="tool-btn clear-btn" onclick="window.clearInput()">🔙</button>
+                        <button class="tool-btn hint-btn" onclick="window.showAnswer()">💡</button>
+                    </div>
+                </div>
+                <div id="keyboard" class="keyboard"></div>
+            </div>
+
+           <div id="stage3-flashcard-answers" class="hidden" style="width: 100%;">
+                <button id="btn-show-meaning" class="setting-btn" style="background-color: #3498db; color: white; box-shadow: 0 5px 0 #2980b9; width: 100%; margin: 0;" onclick="window.showFlashcardMeaning()">👀 顯示字義</button>
+                
+                <div id="flashcard-buttons-area" class="hidden" style="display: flex; justify-content: space-between; gap: 8px; width: 100%;">
+                        <button class="option-btn" style="flex: 1; background-color: #ff7675; box-shadow: 0 4px 0 #d63031; font-size: clamp(14px, 4vw, 18px); padding: 12px 5px;" onclick="window.evaluateFlashcard('bad')">😵 有點不熟</button>
+                        <button class="option-btn" style="flex: 1; background-color: #feca57; box-shadow: 0 4px 0 #e67e22; font-size: clamp(14px, 4vw, 18px); color: #835100; padding: 12px 5px;" onclick="window.evaluateFlashcard('ok')">🤔 好像還行</button>
+                        <button class="option-btn" style="flex: 1; background-color: #55efc4; box-shadow: 0 4px 0 #00b894; font-size: clamp(14px, 4vw, 18px); color: #2d3436; padding: 12px 5px;" onclick="window.evaluateFlashcard('good')">🤩 記憶猶新</button>
+                </div>
+            </div>
+
+            <div id="message" class="message"></div>
+        </div>
+    </div>
+
+    <div id="end-screen" class="screen">
+        <h1 id="end-title" style="margin-bottom: 5px;">挑戰完成！</h1>
+        <p id="end-subtitle" style="font-size: 18px; color: #555; margin-top: 5px; flex-shrink: 0;"></p>
+        
+        <div class="flex-grow-center">
+            <div id="stars-container" class="stars-container"></div>
+            <div id="end-equation" class="equation-box"></div>
+        </div>
+        
+        <div class="bottom-dock" style="display: flex; flex-direction: column; gap: 10px;">
+            <button id="review-btn" class="setting-btn hidden" style="background-color: #f39c12; color: white; box-shadow: 0 5px 0 #e67e22; width: 100%; margin: 0;" onclick="window.showReviewScreen()">👀 複習不熟單字</button>
+            <button id="adv-mode-btn" class="setting-btn adv-btn hidden" style="width: 100%; margin: 0;" onclick="window.startAdvancedMode()">🚀 挑戰進階模式</button>
+            <button class="restart-btn" style="margin: 0;" onclick="window.showStartScreen()">返回主畫面</button>
+        </div>
+    </div>
+
+    <div id="review-screen" class="screen">
+        <h1 style="margin-bottom: 5px;">📖 複習時間</h1>
+        <p style="font-size: 16px; color: #555; margin-bottom: 10px; margin-top: 5px; flex-shrink: 0;">這些是有點不熟的單字，再看一次加深印象吧：</p>
+        <div class="flex-grow-top">
+            <div id="review-list" class="review-list-container"></div>
+        </div>
+        <div class="bottom-dock">
+            <button class="restart-btn" style="margin: 0;" onclick="window.showEndScreen()">🔙 返回上一頁</button>
+        </div>
+    </div>
+
+    <div id="account-modal" class="modal-overlay">
+        <div class="modal-content">
+            <h2 id="modal-title">☁️💻 訪客模式</h2>
+            <p id="modal-desc">目前單字進度保存在這台設備的瀏覽器中。<br>若清除快取，進度可能會消失喔！</p>
+            <button id="google-link-btn" class="google-btn" onclick="window.linkWithGoogle()">🔗 綁定帳號永久保存</button>
+            <button class="close-modal-btn" onclick="window.closeAccountModal()">知道囉，先這樣</button>
+        </div>
+    </div>
+
+    <div id="name-modal" class="modal-overlay">
+        <div class="modal-content" style="max-width: 450px;">
+            <h2 style="margin-bottom: 10px;">👋 冒險家代號設定</h2>
+            <p style="margin-bottom: 15px;">請輸入你的專屬冒險家代號：</p>
+            <input type="text" id="player-name-input" class="seq-input" style="width: 80%; margin-bottom: 15px;" placeholder="例如：Hannah 或者 Savannah">
+            <div style="text-align: left; background: #f0f8ff; padding: 15px; border-radius: 12px; font-size: 14px; color: #2c3e50; margin-bottom: 20px; border-left: 5px solid #3498db; line-height: 1.5;">
+                <b>💡 爸媽小提示：</b><br>
+                • 若要跨設備保留紀錄，請點擊右上角 ☁️ 綁定 Google 帳號。<br>
+                • 若孩子們共用這台設備，可以讓她們使用<b>不同的瀏覽器</b>進度就會分開喔！
+            </div>
+            <button class="setting-btn" style="background-color: #4ecdc4; color: white; width: 100%; box-shadow: 0 5px 0 #3b9f98; margin-bottom: 10px;" onclick="window.submitPlayerName()">儲存並出發！🚀</button>
+            <button class="close-modal-btn" onclick="window.closeNameModal()">先取消</button>
+        </div>
+    </div>
+
+    <div id="ios-install-modal" class="overlay hidden">
+        <div class="ios-instruction-box">
+            <h3 style="color: #ffb703; margin-top: 0;">🍎 蘋果專屬安裝秘笈</h3>
+            <p style="color: #c5c6c7; font-size: 1.1rem; line-height: 1.5; text-align: left;">
+                1. 點擊瀏覽器下方工具列的 <span style="font-size: 1.5rem; vertical-align: middle;">⏏️</span> (分享按鈕)<br><br>
+                2. 往下滑，找到並選擇 <strong>「加入主畫面 ➕」</strong><br><br>
+                這樣就能把遊戲變成專屬 APP，全螢幕遊玩囉！
+            </p>
+            <button class="close-modal-btn" style="margin-top: 15px; background-color: #45a29e; color: white; border: none;" onclick="document.getElementById('ios-install-modal').classList.add('hidden')">我知道了</button>
+        </div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.6.0/dist/confetti.browser.min.js"></script>
+
+    <script type="module">
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/12.11.0/firebase-app.js";
+        import { getAnalytics, logEvent } from "https://www.gstatic.com/firebasejs/12.11.0/firebase-analytics.js";
+        import { initializeFirestore, persistentLocalCache, persistentMultipleTabManager, doc, getDoc, setDoc } from "https://www.gstatic.com/firebasejs/12.11.0/firebase-firestore.js";
+        import { getAuth, signInAnonymously, onAuthStateChanged, GoogleAuthProvider, linkWithPopup, signInWithCredential } from "https://www.gstatic.com/firebasejs/12.11.0/firebase-auth.js";
+
+        // 💡 升級版魔法陣：會偵測新版本並跳出提示
+        if ('serviceWorker' in navigator) {
+            window.addEventListener('load', function() {
+                navigator.serviceWorker.register('./sw.js').then(reg => {
+                    // 偵測是否有新版本正在背景下載或等待
+                    reg.addEventListener('updatefound', () => {
+                        const newWorker = reg.installing;
+                        newWorker.addEventListener('statechange', () => {
+                            // 當新版本已經下載完畢，且準備好可以接管時
+                            if (newWorker.state === 'installed' && navigator.serviceWorker.controller) {
+                                showUpdateToast(newWorker);
+                            }
+                        });
+                    });
+                }).catch(err => console.log('魔法陣啟動失敗：', err));
+            });
+
+            // 處理新 Service Worker 接管後，自動重新載入網頁
+            let refreshing;
+            navigator.serviceWorker.addEventListener('controllerchange', function () {
+                if (refreshing) return;
+                refreshing = true;
+                window.location.reload();
+            });
+        }
+
+        // 💡 呼叫更新提示框的 UI 函數
+        function showUpdateToast(newWorker) {
+            // 建立一個可愛的浮動提示框
+            const toast = document.createElement('div');
+            toast.style.cssText = `
+                position: fixed; bottom: -100px; left: 50%; transform: translateX(-50%);
+                background: #2d3436; color: white; padding: 15px 25px; border-radius: 50px;
+                box-shadow: 0 10px 20px rgba(0,0,0,0.3); z-index: 10000; font-size: 16px;
+                display: flex; align-items: center; gap: 15px; font-weight: bold;
+                transition: bottom 0.5s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+                width: 90%; max-width: 350px; justify-content: space-between;
+            `;
+            toast.innerHTML = `
+                <span>✨ 發現新魔法版本！</span>
+                <button style="background: #00b894; color: white; border: none; padding: 8px 15px; border-radius: 20px; font-weight: bold; cursor: pointer; box-shadow: 0 3px 0 #008f73;">更新</button>
+            `;
+            document.body.appendChild(toast);
+
+            // 用動畫滑入畫面
+            setTimeout(() => { toast.style.bottom = '30px'; }, 100);
+
+            // 點擊更新按鈕時，通知 Service Worker 強制接管
+            toast.querySelector('button').addEventListener('click', () => {
+                toast.innerHTML = '<span>🚀 升級中...</span>';
+                newWorker.postMessage({ action: 'skipWaiting' });
+            });
+        }
+
+        const firebaseConfig = {
+            apiKey: "AIzaSyCXjVOM0EPHB6ZKlizyI-T6Y8satD8llEo",
+            authDomain: "vocab-adventure-d6a5a.firebaseapp.com",
+            projectId: "vocab-adventure-d6a5a",
+            storageBucket: "vocab-adventure-d6a5a.firebasestorage.app",
+            messagingSenderId: "704154289545",
+            appId: "1:704154289545:web:8226afd8db826cc19f8d58",
+            measurementId: "G-PWJDJMV8RT"
+        };
+
+        const app = initializeApp(firebaseConfig);
+        const analytics = getAnalytics(app);
+        const db = initializeFirestore(app, {
+            localCache: persistentLocalCache({
+                tabManager: persistentMultipleTabManager()
+            })
+        });
+
+        const auth = getAuth(app); 
+        let currentUser = null;    
+
+        const goToMathBtn = document.getElementById('go-to-math-btn');
+        if (goToMathBtn) goToMathBtn.addEventListener('click', () => { logEvent(analytics, 'cross_promo_click', { destination_game: 'math_adventure', location: 'lobby_above_coffee' }); });
+        const coffeeBtn = document.getElementById('coffee-btn');
+        if (coffeeBtn) coffeeBtn.addEventListener('click', () => { logEvent(analytics, 'coffee_button_click'); });
+
+        onAuthStateChanged(auth, async (user) => {
+            if (user) {
+                currentUser = user;
+                const statusBtn = document.getElementById('account-status-btn');
+                if (statusBtn) statusBtn.innerText = user.isAnonymous ? "☁️💻" : "☁️✨";
+        
+                console.log("玩家已登入，UID:", user.uid);
+                const userDocRef = doc(db, "users", user.uid);
+                const userSnap = await getDoc(userDocRef);
+                
+                if (userSnap.exists()) {
+                    const data = userSnap.data();
+                    if (data.wordStats && typeof window.updateLocalWordStats === "function") window.updateLocalWordStats(data.wordStats);
+                    if (data.displayName && typeof window.updateGreeting === "function") window.updateGreeting(data.displayName);
+                    else if (typeof window.showNameModal === "function") window.showNameModal();
+                } else {
+                    if (typeof window.saveStats === "function") window.saveStats(); 
+                    if (typeof window.showNameModal === "function") window.showNameModal();
+                }
+            } else {
+                signInAnonymously(auth).catch((error) => console.error("匿名登入失敗:", error));
+            }
+        });
+
+        window.fetchWordsFromCloud = async function() {
+            const docRef = doc(db, "wordBanks", "all_data");
+            const docSnap = await getDoc(docRef);
+            if (docSnap.exists()) return docSnap.data();
+            else throw new Error("雲端圖書館裡找不到題庫！");
+        };
+
+        window.syncStatsToCloud = async function(currentWordStats) {
+            if (currentUser) {
+                try {
+                    const userDocRef = doc(db, "users", currentUser.uid);
+                    await setDoc(userDocRef, { wordStats: currentWordStats, lastActive: new Date().toISOString() }, { merge: true });
+                } catch (error) { console.error("無法同步至雲端:", error); }
+            }
+        };
+
+        window.syncNameToCloud = async function(name) {
+            if (currentUser) {
+                try {
+                    const userDocRef = doc(db, "users", currentUser.uid);
+                    await setDoc(userDocRef, { displayName: name }, { merge: true });
+                } catch (error) { console.error("無法儲存名字:", error); }
+            }
+        };
+
+        window.linkWithGoogle = async function() {
+            if (!currentUser || !currentUser.isAnonymous) return;
+            const provider = new GoogleAuthProvider();
+            const btn = document.getElementById('google-link-btn');
+            
+            try {
+                btn.innerText = "連線中..."; btn.disabled = true;
+                await linkWithPopup(currentUser, provider);
+                document.getElementById('account-status-btn').innerText = "☁️✨";
+                if(typeof window.closeAccountModal === 'function') window.closeAccountModal();
+                alert("綁定成功！進度已永久保存。");
+            } catch (error) {
+                if (error.code === 'auth/credential-already-in-use') {
+                    try {
+                        const credential = GoogleAuthProvider.credentialFromError(error);
+                        await signInWithCredential(auth, credential);
+                        document.getElementById('account-status-btn').innerText = "☁️✨";
+                        if(typeof window.closeAccountModal === 'function') window.closeAccountModal();
+                        alert("歡迎回來！已成功為您載入雲端進度。");
+                        window.location.reload(); 
+                    } catch (signInError) { alert("登入時發生錯誤，請稍後再試。"); }
+                } else { alert("綁定時發生錯誤，請稍後再試。"); }
+            } finally {
+                btn.innerText = "🔗 綁定帳號永久保存"; btn.disabled = false;
+            }
+        };
+
+        // PWA 系統
+        let deferredPrompt;
+        const installBtn = document.getElementById('install-pwa-btn');
+        const iosModal = document.getElementById('ios-install-modal');
+        const isIOS = (/iPad|iPhone|iPod/.test(navigator.userAgent) && !window.MSStream) || (navigator.userAgent.includes("Mac") && navigator.maxTouchPoints > 1);
+        const isStandalone = window.matchMedia('(display-mode: standalone)').matches || window.navigator.standalone;
+
+        if (!isStandalone && installBtn) {
+            if (isIOS) {
+                installBtn.innerHTML = '🍎 下載成為 APP'; installBtn.classList.remove('hidden');
+                installBtn.addEventListener('click', () => { iosModal.classList.remove('hidden'); });
+            } else {
+                window.addEventListener('beforeinstallprompt', (e) => {
+                    e.preventDefault(); deferredPrompt = e; installBtn.classList.remove('hidden');
+                });
+                installBtn.addEventListener('click', async () => {
+                    if (deferredPrompt) {
+                        deferredPrompt.prompt();
+                        const { outcome } = await deferredPrompt.userChoice;
+                        if (outcome === 'accepted') { installBtn.classList.add('hidden'); }
+                        deferredPrompt = null;
+                    }
+                });
+            }
+        }
+
+        // --- 🎮 遊戲核心邏輯模組化 ---
+        const gameState = {
+            maxQuestions: 5, currentCount: 0, wordIndex: 0, options: [],
+            missingLetters: [], userInputs: [], mistakeStage1: false, mistakeStage2: false,
+            sessionScores: [], sessionWords: [], isTransitioning: false, isActive: false,
+            isEarlyQuit: false, isSequential: false, sequentialPool: [], isAdvanced: false,
+            advancedPool: [], advancedScores: [], hintLevel: 0, 
+            isDirectAdvanced: false,
+            isFlashcardMode: false, 
+            flashcardStats: { bad: 0, ok: 0, good: 0 },
+            isSmartMode: false, // 💡 新增：標記是否為智能出題模式
+            smartType: 'fresh'  // 💡 新增：標記是新鮮的('fresh')還是複習('review')
+        };
+
+        const DOM = {};
+
+        window.addEventListener('DOMContentLoaded', () => {
+            Object.assign(DOM, {
+                message: document.getElementById('message'), progress: document.getElementById('progress'),
+                chineseWord: document.getElementById('chinese-word'), stage1: document.getElementById('stage1'),
+                stage2: document.getElementById('stage2'), spellingDisplay: document.getElementById('spelling-display'),
+                keyboard: document.getElementById('keyboard'), currentBankDisplay: document.getElementById('current-bank-display'),
+                mainStartBtn: document.getElementById('main-start-btn'), greetingText: document.getElementById('greeting-text'),
+                nameModal: document.getElementById('name-modal'), playerNameInput: document.getElementById('player-name-input'),
+                endTitle: document.getElementById('end-title'), endSubtitle: document.getElementById('end-subtitle'),
+                starsContainer: document.getElementById('stars-container'), endEquation: document.getElementById('end-equation'),
+                reviewBtn: document.getElementById('review-btn'), advModeBtn: document.getElementById('adv-mode-btn'),
+                reviewList: document.getElementById('review-list'), seqStart: document.getElementById('seq-start'),
+                seqEnd: document.getElementById('seq-end'), seqReviewTitle: document.getElementById('seq-review-title'),
+                bankList: document.getElementById('bank-list')
+            });
+            loadWordBanks();
+        });
+
+        window.addEventListener('resize', () => {
+            if(document.getElementById('bank-screen').classList.contains('active-screen')) adjustBankButtonFonts();
+        });
+
+        window.addEventListener('keydown', (e) => {
+            if (!gameState.isActive || gameState.isTransitioning || DOM.stage2.classList.contains('hidden')) return;
+            let key = e.key.toLowerCase();
+            if (/^[a-z]$/.test(key)) handleKeyPress(key);
+            else if (key === ' ') { e.preventDefault(); handleKeyPress(' '); }
+            else if (key === 'backspace') { e.preventDefault(); clearInput(); }
+        });
+
+        // 💡 所有對外窗口掛載到 window
+        window.switchMainMode = function(mode) {
+            const btnChallenge = document.getElementById('toggle-main-challenge');
+            const btnFlashcard = document.getElementById('toggle-main-flashcard');
+            const diffSection = document.getElementById('difficulty-section');
+            const randomTitle = document.getElementById('random-mode-title');
+            const seqTitle = document.getElementById('seq-review-title');
+            const startSeqBtn = document.getElementById('start-seq-btn');
+
+            if (mode === 'challenge') {
+                gameState.isFlashcardMode = false;
+                btnChallenge.className = 'toggle-btn active-toggle'; btnChallenge.style.backgroundColor = '#e67e22'; btnChallenge.style.color = 'white';
+                btnFlashcard.className = 'toggle-btn inactive-toggle'; btnFlashcard.style.backgroundColor = '#ecf0f1'; btnFlashcard.style.color = '#7f8c8d';
+                diffSection.style.display = 'flex'; 
+                randomTitle.innerText = '🎲 隨機挑戰'; seqTitle.innerText = '📖 依序挑戰'; startSeqBtn.innerText = '開始挑戰';
+            } else {
+                gameState.isFlashcardMode = true;
+                btnChallenge.className = 'toggle-btn inactive-toggle'; btnChallenge.style.backgroundColor = '#ecf0f1'; btnChallenge.style.color = '#7f8c8d';
+                btnFlashcard.className = 'toggle-btn active-toggle'; btnFlashcard.style.backgroundColor = '#e67e22'; btnFlashcard.style.color = 'white';
+                diffSection.style.display = 'none'; 
+                randomTitle.innerText = '🎲 隨機複習'; seqTitle.innerText = '📖 依序複習'; startSeqBtn.innerText = '開始複習';
+            }
+        };
+
+        window.switchDifficulty = function(mode) {
+            const btnNormal = document.getElementById('toggle-normal'); const btnAdv = document.getElementById('toggle-adv');
+            if (mode === 'normal') {
+                btnNormal.className = 'toggle-btn active-toggle'; btnNormal.style.backgroundColor = '#9b59b6'; btnNormal.style.color = 'white';
+                btnAdv.className = 'toggle-btn inactive-toggle'; btnAdv.style.backgroundColor = '#ecf0f1'; btnAdv.style.color = '#7f8c8d';
+            } else {
+                btnNormal.className = 'toggle-btn inactive-toggle'; btnNormal.style.backgroundColor = '#ecf0f1'; btnNormal.style.color = '#7f8c8d';
+                btnAdv.className = 'toggle-btn active-toggle'; btnAdv.style.backgroundColor = '#9b59b6'; btnAdv.style.color = 'white';
+            }
+        };
+        
+        window.switchRandomMode = function(mode) {
+            const btnAll = document.getElementById('toggle-all'); const btnRange = document.getElementById('toggle-range');
+            const rangeContainer = document.getElementById('random-range-container');
+            if (mode === 'all') {
+                btnAll.className = 'toggle-btn active-toggle'; btnRange.className = 'toggle-btn inactive-toggle';
+                rangeContainer.classList.add('hidden'); gameState.isRandomRange = false;
+            } else {
+                btnAll.className = 'toggle-btn inactive-toggle'; btnRange.className = 'toggle-btn active-toggle';
+                rangeContainer.classList.remove('hidden'); gameState.isRandomRange = true;
+            }
+        };
+
+        window.forceUpdate = async function() {
+            let btn = document.getElementById('force-update-link');
+            btn.innerText = "🔄 系統清理中...";
+            
+            try {
+                if ('serviceWorker' in navigator) {
+                    const registrations = await navigator.serviceWorker.getRegistrations();
+                    for (let registration of registrations) { await registration.unregister(); }
+                }
+                if ('caches' in window) {
+                    const keyList = await caches.keys();
+                    await Promise.all(keyList.map(key => caches.delete(key)));
+                }
+            } catch (error) { console.log("清理過程遇到小阻礙", error); } 
+            finally { window.location.replace(window.location.pathname); }
+        };
+
+        const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+        function playSound(type) {
+            if (audioCtx.state === 'suspended') audioCtx.resume();
+            const oscillator = audioCtx.createOscillator(); const gainNode = audioCtx.createGain();
+            oscillator.connect(gainNode); gainNode.connect(audioCtx.destination);
+            
+            if (type === 'correct') {
+                oscillator.type = 'sine'; oscillator.frequency.setValueAtTime(523.25, audioCtx.currentTime); oscillator.frequency.exponentialRampToValueAtTime(1046.50, audioCtx.currentTime + 0.1); 
+                gainNode.gain.setValueAtTime(0.1, audioCtx.currentTime); gainNode.gain.exponentialRampToValueAtTime(0.001, audioCtx.currentTime + 0.5); oscillator.start(audioCtx.currentTime); oscillator.stop(audioCtx.currentTime + 0.5);
+            } else if (type === 'wrong') {
+                oscillator.type = 'sawtooth'; oscillator.frequency.setValueAtTime(150, audioCtx.currentTime); oscillator.frequency.exponentialRampToValueAtTime(100, audioCtx.currentTime + 0.2);
+                gainNode.gain.setValueAtTime(0.1, audioCtx.currentTime); gainNode.gain.exponentialRampToValueAtTime(0.001, audioCtx.currentTime + 0.2); oscillator.start(audioCtx.currentTime); oscillator.stop(audioCtx.currentTime + 0.2);
+            } else if (type === 'star') {
+                oscillator.type = 'triangle'; oscillator.frequency.setValueAtTime(800, audioCtx.currentTime); oscillator.frequency.exponentialRampToValueAtTime(1200, audioCtx.currentTime + 0.1);
+                gainNode.gain.setValueAtTime(0.1, audioCtx.currentTime); gainNode.gain.exponentialRampToValueAtTime(0.001, audioCtx.currentTime + 0.2); oscillator.start(audioCtx.currentTime); oscillator.stop(audioCtx.currentTime + 0.2);
+            } else if (type === 'keypress') {
+                oscillator.type = 'square'; oscillator.frequency.setValueAtTime(600, audioCtx.currentTime); oscillator.frequency.exponentialRampToValueAtTime(300, audioCtx.currentTime + 0.05); 
+                gainNode.gain.setValueAtTime(0.05, audioCtx.currentTime); gainNode.gain.exponentialRampToValueAtTime(0.001, audioCtx.currentTime + 0.05); oscillator.start(audioCtx.currentTime); oscillator.stop(audioCtx.currentTime + 0.05);
+            }
+        }
+        
+        window.playWordAudio = function() {
+            let word = words[gameState.wordIndex].english; let utterance = new SpeechSynthesisUtterance(word);
+            utterance.lang = 'en-US'; utterance.rate = 0.9; window.speechSynthesis.speak(utterance);
+        }
+
+        window.playFlashcardAudio = function() {
+            let word = words[gameState.wordIndex].english; let utterance = new SpeechSynthesisUtterance(word);
+            utterance.lang = 'en-US'; utterance.rate = 0.9; window.speechSynthesis.speak(utterance);
+        };
+
+        window.playOptionAudio = function(index) {
+            if (!gameState.isActive || gameState.isTransitioning) return;
+            let word = gameState.options[index]; if (!word) return;
+            let utterance = new SpeechSynthesisUtterance(word);
+            utterance.lang = 'en-US'; utterance.rate = 0.9; window.speechSynthesis.speak(utterance);
+        }
+
+        function fireConfetti() { confetti({ particleCount: 150, spread: 80, origin: { y: 0.6 }, colors: ['#ff6b6b', '#4ecdc4', '#ffe66d', '#ffffff'] }); }
+
+        let wordBanks = {}; let currentBankName = ""; let words = [];
+        let wordStats = JSON.parse(localStorage.getItem('nanaWordStats')) || {};
+
+        window.updateLocalWordStats = function(cloudStats) {
+            wordStats = cloudStats; localStorage.setItem('nanaWordStats', JSON.stringify(wordStats));
+            if (words.length > 0) initWordStats(); 
+        };
+
+        window.currentPlayerName = "";
+        window.updateGreeting = function(name) {
+            if (DOM.greetingText) {
+                DOM.greetingText.innerHTML = `👋 歡迎回來，${name}！ <button class="edit-name-btn" onclick="window.showNameModal('${name}')">✏️ 修改</button>`;
+                DOM.greetingText.style.display = "block";
+            }
+            window.currentPlayerName = name; 
+        };
+
+        window.showNameModal = function(currentName = "") {
+            if(DOM.playerNameInput) DOM.playerNameInput.value = (typeof currentName === 'string' && currentName) ? currentName : (window.currentPlayerName || "");
+            if(DOM.nameModal) DOM.nameModal.style.display = "flex";
+        };
+
+        window.closeNameModal = function() {
+            if (!window.currentPlayerName) { alert("初次見面！請至少輸入一次代號，建立你的專屬冒險檔案喔！"); return; }
+            if(DOM.nameModal) DOM.nameModal.style.display = "none";
+        };
+
+        window.submitPlayerName = function() {
+            const inputVal = DOM.playerNameInput.value.trim();
+            if (!inputVal) { alert("請輸入一個代號喔！不然系統不認識你～"); return; }
+            DOM.nameModal.style.display = "none"; window.updateGreeting(inputVal);
+            if (window.syncNameToCloud) window.syncNameToCloud(inputVal);
+        };
+
+        window.showAccountModal = function() {
+            let isAnon = !document.getElementById('account-status-btn').innerText.includes("✨");
+            document.getElementById('modal-title').innerText = isAnon ? "☁️💻 訪客模式" : "☁️✨ 永久保護中";
+            document.getElementById('modal-desc').innerHTML = isAnon 
+                ? "目前單字進度保存在這台設備中。<br>若清除瀏覽器紀錄，進度可能會消失。<br><br><b>建議綁定帳號，永久保存孩子的心血！</b>" 
+                : "太棒了！單字進度已與您的 Google 帳號綁定。<br>無論使用哪台設備，登入後都會自動同步！";
+            document.getElementById('google-link-btn').style.display = isAnon ? "flex" : "none";
+            document.getElementById('account-modal').style.display = "flex";
+        };
+        window.closeAccountModal = function() { document.getElementById('account-modal').style.display = "none"; };
+
+        async function loadWordBanks(retries = 2) { 
+            try {
+                if(DOM.currentBankDisplay) DOM.currentBankDisplay.innerText = `連線至雲端題庫中...`;
+                wordBanks = await window.fetchWordsFromCloud();
+                
+                // 💡 優化：先去 localStorage 找上次玩哪個題庫
+                let savedBank = localStorage.getItem('nanaCurrentBank');
+                
+                // 💡 如果有存檔，且雲端剛好也有這個題庫，就用舊的；否則才抓第一個
+                if (savedBank && wordBanks[savedBank]) {
+                    currentBankName = savedBank;
+                } else {
+                    currentBankName = Object.keys(wordBanks)[0];
+                }
+                
+                words = wordBanks[currentBankName];
+                if(DOM.currentBankDisplay) DOM.currentBankDisplay.innerText = `目前題庫：${currentBankName}`;
+                if(DOM.mainStartBtn) DOM.mainStartBtn.disabled = false;
+                await initWordStats();
+            } catch (error) {
+                if (retries > 0) {
+                    if(DOM.currentBankDisplay) DOM.currentBankDisplay.innerText = `系統暖機中，自動重試...`;
+                    setTimeout(() => { loadWordBanks(retries - 1); }, 800);
+                } else {
+                    if(DOM.currentBankDisplay) DOM.currentBankDisplay.innerText = "連線失敗！請檢查網路。";
+                }
+            }
+        }
+
+        async function initWordStats() { 
+            words.forEach(w => { 
+                if (!wordStats[w.english]) {
+                    wordStats[w.english] = { weight: 20, isSeen: false }; 
+                } else if (wordStats[w.english].isSeen === undefined) {
+                    wordStats[w.english].isSeen = wordStats[w.english].weight !== 20;
+                }
+            }); 
+            await window.saveStats(); 
+        }
+        
+        window.saveStats = async function() { 
+            localStorage.setItem('nanaWordStats', JSON.stringify(wordStats)); 
+            if (window.syncStatsToCloud) await window.syncStatsToCloud(wordStats);
+        };
+        
+        function getWeightedRandomWordIndex() {
+            let pool = (gameState.isRandomRange && gameState.randomPool && gameState.randomPool.length > 0) ? gameState.randomPool : words;
+            let totalWeight = pool.reduce((sum, w) => sum + wordStats[w.english].weight, 0);
+            let randomNum = Math.random() * totalWeight; 
+            let weightSum = 0;
+            for (let i = 0; i < pool.length; i++) {
+                weightSum += wordStats[pool[i].english].weight;
+                if (randomNum <= weightSum) return words.indexOf(pool[i]); 
+            } 
+            return words.indexOf(pool[0]);
+        }
+
+        function switchScreen(screenId) { 
+            document.querySelectorAll('.screen').forEach(s => s.classList.remove('active-screen')); 
+            document.getElementById(screenId).classList.add('active-screen'); 
+        }
+        
+        window.showStartScreen = function() { DOM.currentBankDisplay.innerText = `目前題庫：${currentBankName}`; switchScreen('start-screen'); }
+        window.showModeScreen = function() { 
+            DOM.seqStart.value = ''; DOM.seqEnd.value = ''; 
+            let randStart = document.getElementById('rand-start'); let randEnd = document.getElementById('rand-end');
+            if (randStart) randStart.value = ''; if (randEnd) randEnd.value = '';
+            
+            if (typeof window.switchRandomMode === 'function') window.switchRandomMode('all');
+            if (typeof window.switchDifficulty === 'function') window.switchDifficulty('normal');
+            // 💡 預設進入翻牌複習
+            if (typeof window.switchMainMode === 'function') window.switchMainMode('flashcard');
+            
+            switchScreen('mode-screen'); 
+        }
+        
+        window.showBankScreen = function() {
+            DOM.bankList.innerHTML = '';
+            for (let bankName in wordBanks) {
+                let btn = document.createElement('button'); btn.className = 'bank-option-btn';
+                let wordCount = wordBanks[bankName].length;
+                btn.innerText = bankName === currentBankName ? `⭐ ${bankName} (${wordCount}字)` : `${bankName} (${wordCount}字)`;
+                if(bankName === currentBankName) { btn.style.backgroundColor = '#f39c12'; btn.style.boxShadow = '0 5px 0 #e67e22'; } 
+                
+                btn.onclick = async () => {
+                    currentBankName = bankName; 
+                    words = wordBanks[bankName]; 
+                    // 💡 優化：把選擇的題庫存進瀏覽器記憶裡
+                    localStorage.setItem('nanaCurrentBank', currentBankName);
+                    
+                    await initWordStats(); 
+                    window.showStartScreen(); 
+                }; 
+                DOM.bankList.appendChild(btn);
+            }
+            switchScreen('bank-screen'); setTimeout(adjustBankButtonFonts, 10);
+        }
+        
+        function adjustBankButtonFonts() {
+            let buttons = document.querySelectorAll('.bank-option-btn'); let minFontSize = 24; 
+            buttons.forEach(btn => {
+                btn.style.fontSize = '24px'; let size = 24;
+                while (btn.scrollWidth > btn.clientWidth && size > 12) { size--; btn.style.fontSize = size + 'px'; }
+                if (size < minFontSize) minFontSize = size;
+            });
+            buttons.forEach(btn => btn.style.fontSize = minFontSize + 'px');
+        }
+        
+        window.startRandomSession = function(num) { 
+            gameState.isSequential = false; 
+            if (gameState.isRandomRange) {
+                let startVal = parseInt(document.getElementById('rand-start').value); 
+                let endVal = parseInt(document.getElementById('rand-end').value);
+                if (isNaN(startVal) || isNaN(endVal) || startVal > endVal || startVal < 1) { 
+                    alert("請輸入正確的編號範圍喔！（例如從 1 到 20）"); return; 
+                }
+                let pool = words.filter((w, index) => { 
+                    let sn = w.serialnum !== undefined ? w.serialnum : (index + 1); 
+                    return sn >= startVal && sn <= endVal; 
+                });
+                if (pool.length === 0) { alert("這個範圍內沒有找到單字，請檢查一下編號喔！"); return; }
+                if (pool.length < num) {
+                    alert(`你選的區間只有 ${pool.length} 個單字，不足 ${num} 題，我們將為你調整題數！`);
+                    gameState.maxQuestions = pool.length;
+                } else { gameState.maxQuestions = num; }
+                gameState.randomPool = pool;
+            } else {
+                gameState.maxQuestions = num; gameState.randomPool = words; 
+            }
+            initSession(); 
+        }
+
+        window.startSequentialSession = function() {
+            let startVal = parseInt(DOM.seqStart.value); let endVal = parseInt(DOM.seqEnd.value);
+            if (isNaN(startVal) || isNaN(endVal) || startVal > endVal || startVal < 1) { alert("請輸入正確的編號範圍喔！（例如從 28 到 31）"); return; }
+            if ((endVal - startVal + 1) > 10) { alert("一次太多題會太累唷，我們先從最多10題開始吧"); return; }
+            let pool = words.filter((w, index) => { let sn = w.serialnum !== undefined ? w.serialnum : (index + 1); return sn >= startVal && sn <= endVal; });
+            if (pool.length === 0) { alert("這個範圍內沒有找到單字，請檢查一下編號喔！"); return; }
+            gameState.isSequential = true; gameState.sequentialPool = pool.sort(() => Math.random() - 0.5); gameState.maxQuestions = gameState.sequentialPool.length; initSession();
+        }
+
+        // --- 🧠 智能出題模式控制邏輯 ---
+        window.switchSmartMode = function(mode) {
+            const btnFresh = document.getElementById('toggle-smart-fresh');
+            const btnReview = document.getElementById('toggle-smart-review');
+            gameState.smartType = mode;
+
+            if (mode === 'fresh') {
+                btnFresh.className = 'toggle-btn active-toggle'; btnFresh.style.backgroundColor = '#f1c40f'; btnFresh.style.color = '#835100';
+                btnReview.className = 'toggle-btn inactive-toggle'; btnReview.style.backgroundColor = '#ecf0f1'; btnReview.style.color = '#7f8c8d';
+            } else {
+                btnFresh.className = 'toggle-btn inactive-toggle'; btnFresh.style.backgroundColor = '#ecf0f1'; btnFresh.style.color = '#7f8c8d';
+                btnReview.className = 'toggle-btn active-toggle'; btnReview.style.backgroundColor = '#f1c40f'; btnReview.style.color = '#835100';
+            }
+        };
+
+        window.startSmartSession = function(num) {
+            gameState.isSequential = false;
+            gameState.isRandomRange = false;
+            gameState.isSmartMode = true; // 啟動智能模式標籤
+
+            if (gameState.smartType === 'fresh') {
+                // ✨ 策略 1：尋找完全沒見過的單字 (isSeen === false)
+                let freshWords = words.filter(w => wordStats[w.english] && wordStats[w.english].isSeen === false);
+                
+                if (freshWords.length === 0) {
+                    // 💡 邊界情況 (Edge Case)：所有單字都破關了！觸發圖鑑成就感。
+                    alert("🎉 哇！這本圖鑑的所有單字你都挑戰過了！我們自動幫你切換成『🧠 複習不熟的』模式囉！");
+                    window.switchSmartMode('review');
+                    // 直接遞迴呼叫自己，但模式已經變成 review 了
+                    window.startSmartSession(num);
+                    return; 
+                }
+
+                // 將未見過的單字隨機打亂，取所需的數量
+                gameState.randomPool = freshWords.sort(() => Math.random() - 0.5).slice(0, num);
+                gameState.maxQuestions = gameState.randomPool.length; // 以防剩下的單字不足 num 題
+
+            } else if (gameState.smartType === 'review') {
+                // 🧠 策略 2：根據權重 (weight) 由高到低排序，挑出最不熟的單字
+                let reviewWords = [...words].sort((a, b) => {
+                    let weightA = wordStats[a.english] ? wordStats[a.english].weight : 20;
+                    let weightB = wordStats[b.english] ? wordStats[b.english].weight : 20;
+                    return weightB - weightA; // 權重高的排前面
+                });
+
+                gameState.randomPool = reviewWords.slice(0, num);
+                gameState.maxQuestions = gameState.randomPool.length;
+            }
+            initSession();
+        };
+
+        window.startAdvancedMode = function() {
+            gameState.isAdvanced = true; gameState.isDirectAdvanced = false;
+            gameState.advancedPool = [...gameState.sessionWords]; gameState.maxQuestions = gameState.advancedPool.length;
+            gameState.advancedScores = []; gameState.currentCount = 0; gameState.isTransitioning = false; gameState.isActive = true; 
+            switchScreen('game-screen'); if (audioCtx.state === 'suspended') audioCtx.resume(); nextQuestion(); 
+        }
+
+        function initSession() {
+            const advBtn = document.getElementById('toggle-adv');
+            const isDirectAdv = advBtn && advBtn.classList.contains('active-toggle');
+            gameState.isAdvanced = isDirectAdv; gameState.isDirectAdvanced = isDirectAdv; 
+            
+            gameState.currentCount = 0; gameState.sessionScores = []; gameState.advancedScores = []; 
+            gameState.sessionWords = []; gameState.advancedPool = []; gameState.isEarlyQuit = false; 
+            gameState.isTransitioning = false; gameState.isActive = true; 
+            gameState.flashcardStats = { bad: 0, ok: 0, good: 0 };
+            
+            // 💡 [新增] 數據追蹤：遊戲開始
+            let currentMode = gameState.isFlashcardMode ? 'flashcard' : 
+                              (gameState.isSmartMode ? `smart_${gameState.smartType}` : 
+                              (gameState.isSequential ? 'sequential' : 'random'));
+            logEvent(analytics, 'game_start', {
+                mode: currentMode,
+                difficulty: gameState.isAdvanced ? 'advanced' : 'normal',
+                question_count: gameState.maxQuestions,
+                word_bank: currentBankName // 順便記錄他們玩了哪個題庫
+            });
+
+            switchScreen('game-screen'); if (audioCtx.state === 'suspended') audioCtx.resume(); nextQuestion(); 
+        }
+
+        window.quitGame = function() {
+            if (confirm("確定要提早結束挑戰嗎？目前的成績會立刻結算喔！")) { 
+                // 💡 [新增] 數據追蹤：提早離開
+                logEvent(analytics, 'game_quit', {
+                    questions_answered: gameState.currentCount - 1, // 已經答了幾題
+                    total_questions: gameState.maxQuestions,
+                    progress_rate: Math.round(((gameState.currentCount - 1) / gameState.maxQuestions) * 100) + '%'
+                });
+
+                gameState.isActive = false; gameState.isEarlyQuit = true; window.showEndScreen(true); 
+            }
+        }
+
+        function nextQuestion() {
+            if (!gameState.isActive) return; 
+            confetti.reset(); gameState.currentCount++; gameState.mistakeStage1 = false; gameState.mistakeStage2 = false; 
+            gameState.isTransitioning = false; gameState.hintLevel = 0;
+            
+            if (gameState.isSequential) {
+                let targetWord = gameState.sequentialPool[gameState.currentCount - 1];
+                gameState.wordIndex = words.indexOf(targetWord);
+            } else if (gameState.isAdvanced && !gameState.isDirectAdvanced) { 
+                let targetWord = gameState.advancedPool[gameState.currentCount - 1];
+                gameState.wordIndex = words.indexOf(targetWord);
+            } else {
+                gameState.wordIndex = getWeightedRandomWordIndex(); 
+            }
+            
+            let currentWord = words[gameState.wordIndex];
+            // 💡 關鍵！只要單字被抽出來，就標記為「已經見過了」
+            if (wordStats[currentWord.english]) {
+                wordStats[currentWord.english].isSeen = true;
+                window.saveStats(); // 確保狀態立刻存檔
+            }
+            
+            if (gameState.isFlashcardMode) {
+                DOM.progress.innerText = `第 ${gameState.currentCount} / ${gameState.maxQuestions} 題 (複習)`;
+                DOM.message.innerText = "想一想，這個單字是什麼意思？";
+                
+                document.getElementById('stage1').classList.add('hidden');
+                document.getElementById('stage2').classList.add('hidden');
+                document.getElementById('stage3-flashcard-answers').classList.remove('hidden');
+                
+                document.getElementById('chinese-word').classList.add('hidden');
+                document.getElementById('flashcard-question-area').classList.remove('hidden');
+                document.getElementById('flashcard-english').innerText = currentWord.english;
+                
+                document.getElementById('btn-show-meaning').classList.remove('hidden');
+                document.getElementById('flashcard-buttons-area').classList.add('hidden');
+                document.getElementById('flashcard-chinese').classList.add('hidden');
+                return;
+            } else if (gameState.isAdvanced) {
+                DOM.progress.innerText = `第 ${gameState.currentCount} / ${gameState.maxQuestions} 題 (進階)`;
+                document.getElementById('flashcard-question-area').classList.add('hidden');
+                DOM.chineseWord.classList.remove('hidden');
+                DOM.chineseWord.innerHTML = currentWord.chineseHTML; DOM.message.innerText = "請拼出正確的英文單字！";
+                enterStage2(); return;
+            } else {
+                DOM.progress.innerText = `第 ${gameState.currentCount} / ${gameState.maxQuestions} 題`;
+                document.getElementById('flashcard-question-area').classList.add('hidden');
+                DOM.chineseWord.classList.remove('hidden');
+                DOM.chineseWord.innerHTML = currentWord.chineseHTML; DOM.message.innerText = "請選出正確的英文單字！";
+                DOM.stage1.classList.remove('hidden'); DOM.stage2.classList.add('hidden'); document.getElementById('stage3-flashcard-answers').classList.add('hidden');
+                
+                let options = [currentWord.english]; let maxOptions = Math.min(3, words.length);
+                while (options.length < maxOptions) { 
+                    let randomEng = words[Math.floor(Math.random() * words.length)].english; 
+                    if (!options.includes(randomEng)) options.push(randomEng); 
+                }
+                gameState.options = options.sort(() => Math.random() - 0.5);
+                
+                for (let i = 0; i < 3; i++) { 
+                    let row = document.getElementById('opt-row-' + i); let btn = document.getElementById('opt' + i); 
+                    if(i < maxOptions) { btn.innerText = gameState.options[i]; row.style.display = 'flex'; } 
+                    else { row.style.display = 'none'; } 
+                }
+            }
+        }
+
+        window.showFlashcardMeaning = function() {
+            document.getElementById('btn-show-meaning').classList.add('hidden');
+            document.getElementById('flashcard-buttons-area').classList.remove('hidden'); 
+            document.getElementById('flashcard-chinese').classList.remove('hidden'); 
+            document.getElementById('flashcard-chinese').innerHTML = words[gameState.wordIndex].chineseHTML;
+            DOM.message.innerText = "你對這個單字的熟悉度如何呢？";
+        };
+
+        window.evaluateFlashcard = function(rating) {
+            if (gameState.isTransitioning || !gameState.isActive) return;
+            gameState.isTransitioning = true;
+
+            let correctWordObj = words[gameState.wordIndex];
+            let correctWord = correctWordObj.english;
+            
+            if (rating === 'bad') {
+                wordStats[correctWord].weight += 2; 
+                gameState.flashcardStats.bad++;
+                // 💡 防呆：如果清單裡面沒有這個字，才把它推入清單
+                if (!gameState.sessionWords.includes(correctWordObj)) {
+                    gameState.sessionWords.push(correctWordObj); 
+                }
+            } else if (rating === 'ok') {
+                gameState.flashcardStats.ok++; 
+            } else if (rating === 'good') {
+                wordStats[correctWord].weight = Math.max(1, wordStats[correctWord].weight - 2); 
+                gameState.flashcardStats.good++;
+            }
+            window.saveStats();
+            
+            if (gameState.currentCount >= gameState.maxQuestions) { 
+                DOM.message.innerText = `🎉 複習完成！ 🎉`; 
+                fireConfetti(); setTimeout(() => window.showEndScreen(false), 1500); 
+            } else { 
+                DOM.message.innerText = "下一題！"; setTimeout(nextQuestion, 500); 
+            }
+        };
+
+        window.checkStage1 = function(selectedIndex) {
+            if (gameState.isTransitioning || !gameState.isActive) return;
+            let correctWord = words[gameState.wordIndex].english;
+            if (gameState.options[selectedIndex] === correctWord) { 
+                playSound('correct'); DOM.message.innerText = "答對了！現在試著填入缺少的字母吧。"; setTimeout(enterStage2, 500); 
+            } else { 
+                playSound('wrong'); DOM.message.innerText = "哎呀，再試一次看看！"; 
+                wordStats[correctWord].weight += 5; window.saveStats(); gameState.mistakeStage1 = true; 
+            }
+        }
+
+        function enterStage2() {
+            if (!gameState.isActive) return; 
+            DOM.stage1.classList.add('hidden'); DOM.stage2.classList.remove('hidden'); document.getElementById('stage3-flashcard-answers').classList.add('hidden');
+            let word = words[gameState.wordIndex].english; gameState.missingLetters = []; gameState.userInputs = [];
+            
+            if (gameState.isAdvanced) {
+                for (let i = 0; i < word.length; i++) { gameState.missingLetters.push(word[i]); gameState.userInputs.push(word[i] === " " ? " " : "_"); }
+            } else {
+                if(word.length <= 2) { gameState.missingLetters.push(word[1] || word[0]); gameState.userInputs.push("_"); } 
+                else { for (let i = 1; i < word.length - 1; i++) { gameState.missingLetters.push(word[i]); gameState.userInputs.push("_"); } }
+            }
+            updateSpellingDisplay(); createKeyboard();
+        }
+
+        function updateSpellingDisplay() {
+            let word = words[gameState.wordIndex].english; let displayStr = "";
+            let formattedInputs = gameState.userInputs.map(char => char === " " ? "\u00A0" : char);
+            if (gameState.isAdvanced) { displayStr = formattedInputs.join(" "); } 
+            else {
+                if(word.length <= 2) displayStr = word[0] + " " + formattedInputs.join(" "); 
+                else displayStr = word[0] + " " + formattedInputs.join(" ") + " " + word[word.length - 1]; 
+            }
+            DOM.spellingDisplay.innerText = displayStr.toUpperCase();
+        }
+
+        function createKeyboard() {
+            DOM.keyboard.innerHTML = ""; const rows = ["QWERTYUIOP", "ASDFGHJKL", "ZXCVBNM"];
+            rows.forEach(row => {
+                let rowDiv = document.createElement("div"); rowDiv.className = "keyboard-row";
+                row.split("").forEach(letter => { 
+                    let btn = document.createElement("button"); btn.className = "key"; btn.innerText = letter; 
+                    btn.onclick = () => handleKeyPress(letter.toLowerCase()); rowDiv.appendChild(btn); 
+                });
+                DOM.keyboard.appendChild(rowDiv);
+            });
+            let spaceRowDiv = document.createElement("div"); spaceRowDiv.className = "keyboard-row";
+            let spaceBtn = document.createElement("button"); spaceBtn.className = "key space-btn"; spaceBtn.innerText = "SPACE"; 
+            spaceBtn.onclick = () => handleKeyPress(" "); spaceRowDiv.appendChild(spaceBtn); DOM.keyboard.appendChild(spaceRowDiv);
+        }
+
+        window.clearInput = function() {
+            if (gameState.isTransitioning || !gameState.isActive) return;
+            gameState.userInputs = gameState.userInputs.map(char => char === " " ? " " : "_"); 
+            if (gameState.isAdvanced && gameState.hintLevel === 1) {
+                let correctWord = words[gameState.wordIndex].english; let firstIdx = 0; let lastIdx = correctWord.length - 1;
+                while(correctWord[firstIdx] === " " && firstIdx < correctWord.length) firstIdx++;
+                while(correctWord[lastIdx] === " " && lastIdx >= 0) lastIdx--;
+                gameState.userInputs[firstIdx] = correctWord[firstIdx]; gameState.userInputs[lastIdx] = correctWord[lastIdx];
+            }
+            updateSpellingDisplay(); playSound('keypress'); DOM.message.innerText = "已清空，再試一次吧！";
+        }
+
+        window.showAnswer = function() {
+            if (gameState.isTransitioning || !gameState.isActive) return;
+            let correctWord = words[gameState.wordIndex].english; 
+
+            // 💡 [新增] 數據追蹤：使用提示
+            logEvent(analytics, 'use_hint', {
+                word: correctWord, // 記錄是哪個單字太難
+                mode: gameState.isAdvanced ? 'advanced' : 'normal',
+                hint_level: gameState.hintLevel // 如果是進階模式，記錄他看了第幾層提示
+            });
+
+            if (gameState.isAdvanced) {
+                if (gameState.hintLevel === 0 && correctWord.length > 2) {
+                    gameState.hintLevel = 1; gameState.mistakeStage2 = true; wordStats[correctWord].weight += 1; window.saveStats();
+                    let firstIdx = 0; let lastIdx = correctWord.length - 1;
+                    while(correctWord[firstIdx] === " " && firstIdx < correctWord.length) firstIdx++;
+                    while(correctWord[lastIdx] === " " && lastIdx >= 0) lastIdx--;
+                    gameState.userInputs[firstIdx] = correctWord[firstIdx]; gameState.userInputs[lastIdx] = correctWord[lastIdx];
+                    updateSpellingDisplay(); DOM.message.innerText = "💡 提示：字首和字尾是這些！再試試！"; checkCompletion(); return; 
+                } else {
+                    gameState.hintLevel = 2; gameState.mistakeStage2 = true; wordStats[correctWord].weight += 2; window.saveStats();
+                    gameState.userInputs = [...gameState.missingLetters]; updateSpellingDisplay(); DOM.message.innerText = "💡 完整答案是這樣拼喔！";
+                }
+            } else {
+                gameState.mistakeStage2 = true; wordStats[correctWord].weight += 3; window.saveStats();
+                gameState.userInputs = [...gameState.missingLetters]; updateSpellingDisplay(); DOM.message.innerText = "💡 答案是這樣拼喔！";
+            }
+            
+            gameState.isTransitioning = true; 
+            if (gameState.isAdvanced) { 
+                gameState.advancedScores.push(0); 
+                if (gameState.advancedPool.length < gameState.maxQuestions) gameState.advancedPool.push(words[gameState.wordIndex]);
+            } 
+            else {
+                let questionScore = gameState.mistakeStage1 ? 0 : 0.5; 
+                gameState.sessionScores.push(questionScore); 
+                if (!gameState.sessionWords.includes(words[gameState.wordIndex])) gameState.sessionWords.push(words[gameState.wordIndex]); 
+            }
+
+            setTimeout(() => {
+                if (!gameState.isActive) return; 
+                if (gameState.currentCount >= gameState.maxQuestions) { 
+                    DOM.message.innerText = `🎉 ${gameState.maxQuestions}題挑戰完成！ 🎉`; 
+                    fireConfetti(); setTimeout(() => window.showEndScreen(false), 2000); 
+                } else { DOM.message.innerText = "準備挑戰下一題！"; setTimeout(nextQuestion, 2000); }
+            }, 2500); 
+        }
+
+        function handleKeyPress(letter) {
+            if (gameState.isTransitioning || !gameState.isActive) return; 
+            let emptyIndex = gameState.userInputs.indexOf("_");
+            if (emptyIndex !== -1) { gameState.userInputs[emptyIndex] = letter; updateSpellingDisplay(); playSound('keypress'); }
+            checkCompletion();
+        }
+
+        function checkCompletion() {
+            if (!gameState.userInputs.includes("_")) {
+                let correctWordObj = words[gameState.wordIndex];
+                let correctWord = correctWordObj.english;
+                if (gameState.userInputs.join("") === gameState.missingLetters.join("")) {
+                    gameState.isTransitioning = true; playSound('correct'); let questionScore = 0;
+                    
+                    if (gameState.isAdvanced) {
+                        if (gameState.hintLevel === 0 && !gameState.mistakeStage2) {
+                            questionScore = 1;
+                            if (!gameState.isSequential) {
+                                wordStats[correctWord].weight = Math.max(1, wordStats[correctWord].weight - 2); 
+                                window.saveStats();
+                            }
+                        }
+                        else if (gameState.hintLevel === 1 || gameState.mistakeStage2) questionScore = 0.5;
+                        
+                        gameState.advancedScores.push(questionScore);
+                        if (gameState.advancedPool.length < gameState.maxQuestions) {
+                            gameState.advancedPool.push(correctWordObj);
+                        }
+                    } else {
+                        if (!gameState.mistakeStage1 && !gameState.mistakeStage2) questionScore = 1; 
+                        else if ((gameState.mistakeStage1 && !gameState.mistakeStage2) || (!gameState.mistakeStage1 && gameState.mistakeStage2)) questionScore = 0.5; 
+                        else questionScore = 0; 
+                        
+                        gameState.sessionScores.push(questionScore); 
+                        if (!gameState.sessionWords.includes(correctWordObj)) gameState.sessionWords.push(correctWordObj);
+                        
+                        if (questionScore === 1 && !gameState.isSequential) { 
+                            wordStats[correctWord].weight = Math.max(1, wordStats[correctWord].weight - 2); window.saveStats(); 
+                        }
+                    }
+                    
+                    if (gameState.currentCount >= gameState.maxQuestions) { 
+                        DOM.message.innerText = `🎉 ${gameState.maxQuestions}題挑戰完成！ 🎉`; 
+                        fireConfetti(); setTimeout(() => window.showEndScreen(false), 2000); 
+                    } else { 
+                        DOM.message.innerText = "🎉 完美過關！準備挑戰下一題！ 🎉"; 
+                        fireConfetti(); setTimeout(nextQuestion, 2000); 
+                    }
+                } else {
+                    playSound('wrong'); DOM.message.innerText = "拼錯囉！點擊「重新輸入」或直接繼續點字。"; 
+                    wordStats[correctWord].weight += 3; window.saveStats(); gameState.mistakeStage2 = true; 
+                    setTimeout(() => { if(gameState.isActive && DOM.message.innerText.includes("拼錯囉")) { DOM.message.innerText = "請按 🔙 重新輸入，或按 💡 看答案"; } }, 2000);
+                }
+            }
+        }
+
+        window.showEndScreen = function(isEarlyQuit = false) {
+            confetti.reset(); if (isEarlyQuit) gameState.isEarlyQuit = true; 
+            gameState.isActive = false; switchScreen('end-screen'); DOM.starsContainer.innerHTML = ''; 
+            
+            let currentScores = gameState.isAdvanced ? gameState.advancedScores : gameState.sessionScores;
+            let unitName = gameState.isAdvanced ? '皇冠' : '顆星';
+
+            if (gameState.isEarlyQuit) {
+                DOM.endTitle.innerText = "提早結束！"; DOM.endSubtitle.innerText = `你完成了 ${gameState.currentCount} 題：`;
+            } else {
+                let modeText = gameState.isFlashcardMode ? "翻牌複習" : (gameState.isAdvanced ? "進階模式" : (gameState.isSequential ? "依序挑戰" : "隨機挑戰"));
+                DOM.endTitle.innerText = `${modeText}完成！`; 
+                DOM.endSubtitle.innerText = gameState.isFlashcardMode ? "這是你這次的記憶力評估報告：" : `按照出題順序，這是你獲得的${unitName}：`;
+            }
+
+            if (gameState.isFlashcardMode) {
+                DOM.endEquation.innerText = `🤩 記憶猶新：${gameState.flashcardStats.good} 題\n🤔 好像還行：${gameState.flashcardStats.ok} 題\n😵 有點不熟：${gameState.flashcardStats.bad} 題`;
+                if (gameState.flashcardStats.bad > 0) DOM.reviewBtn.classList.remove('hidden'); else DOM.reviewBtn.classList.add('hidden'); 
+                DOM.advModeBtn.classList.add('hidden');
+                return; 
+            }
+
+            let fullStars = 0, halfStars = 0, zeroStars = 0, totalScore = 0; let needsReview = false;
+            if (currentScores.length === 0) { 
+                DOM.endEquation.innerText = "這次沒有完成任何題目，下次繼續加油喔！"; 
+                DOM.reviewBtn.classList.add('hidden'); DOM.advModeBtn.classList.add('hidden'); return; 
+            }
+
+            currentScores.forEach((score, index) => {
+                totalScore += score; if (score === 1) fullStars++; else if (score === 0.5) halfStars++; else zeroStars++;
+                if (score < 1) needsReview = true; 
+                let fillId = score === 0.5 ? 'url(#half-star-gradient)' : (score === 1 ? '#ffca28' : '#ecf0f1'); 
+                let strokeColor = score === 0 ? '#bdc3c7' : '#f39c12';
+                let svgHTML = gameState.isAdvanced 
+                    ? `<svg class="star-svg" viewBox="0 0 24 24" fill="${fillId}" stroke="${strokeColor}" stroke-width="2" stroke-linejoin="round"><path d="M3 20h18L19 7l-4 5-3-8-3 8-4-5z"/></svg>`
+                    : `<svg class="star-svg" viewBox="0 0 24 24" fill="${fillId}" stroke="${strokeColor}" stroke-width="2"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2" /></svg>`;
+                let wrapper = document.createElement('div'); wrapper.innerHTML = svgHTML; let starEl = wrapper.firstElementChild; DOM.starsContainer.appendChild(starEl);
+                setTimeout(() => { starEl.classList.add('pop'); if (score > 0) playSound('star'); }, (index + 1) * 300); 
+            });
+            DOM.endEquation.innerText = `${fullStars} 題滿分 + ${halfStars} 題半個 + ${zeroStars} 題需加油\n總成績：(1 × ${fullStars}) + (0.5 × ${halfStars}) + (0 × ${zeroStars}) = ${totalScore} ${unitName}`;
+            if (needsReview) DOM.reviewBtn.classList.remove('hidden'); else DOM.reviewBtn.classList.add('hidden'); 
+            if (!gameState.isAdvanced && currentScores.length > 0 && !gameState.isEarlyQuit) DOM.advModeBtn.classList.remove('hidden'); else DOM.advModeBtn.classList.add('hidden');
+        }
+
+        window.showReviewScreen = function() {
+            switchScreen('review-screen'); DOM.reviewList.innerHTML = ''; 
+            let currentScores = gameState.isAdvanced ? gameState.advancedScores : gameState.sessionScores;
+            let targetWords = gameState.isAdvanced ? gameState.advancedPool : gameState.sessionWords;
+            
+            if (gameState.isFlashcardMode) {
+                targetWords.forEach(wordObj => {
+                    let itemDiv = document.createElement('div'); itemDiv.className = 'review-item';
+                    let zhDiv = document.createElement('div'); zhDiv.className = 'review-item-zh'; zhDiv.innerHTML = wordObj.chineseHTML;
+                    let enDiv = document.createElement('div'); enDiv.className = 'review-item-en'; enDiv.innerText = wordObj.english;
+                    itemDiv.appendChild(zhDiv); itemDiv.appendChild(enDiv); DOM.reviewList.appendChild(itemDiv);
+                });
+                return;
+            }
+
+            currentScores.forEach((score, index) => {
+                if (score < 1) {
+                    let wordObj = targetWords[index]; let itemDiv = document.createElement('div'); itemDiv.className = 'review-item';
+                    let zhDiv = document.createElement('div'); zhDiv.className = 'review-item-zh'; zhDiv.innerHTML = wordObj.chineseHTML;
+                    let enDiv = document.createElement('div'); enDiv.className = 'review-item-en'; enDiv.innerText = wordObj.english;
+                    itemDiv.appendChild(zhDiv); itemDiv.appendChild(enDiv); DOM.reviewList.appendChild(itemDiv);
+                }
+            });
+        }
+    </script>
+</body>
+</html>

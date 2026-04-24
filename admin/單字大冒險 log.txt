@@ -1,0 +1,20 @@
+單字大冒險 log
+
+[GAME DESIGN]
+--在"start-screen"選擇題庫("bank-screen")
+--接著在"mode-screen"選擇遊戲模式（隨機挑戰、依序複習），進入遊戲畫面("game-screen")。
+--遊戲畫面中先出現單字的中文，第一關("stage1")是選擇題，從底下的三個搭配發音按鈕的單字選項選出正確答案。選對則進入第二關("stage2")填空題。
+--在第二關("stage2")填空題中如果沒有拼正確，可以重新輸入。如果無法拼出正確單字，按提示鈕得到正確拼字。
+--完成所有題目之後，出現顯示結果頁面("end-screen")，可選擇進入("review-screen")複習答錯的單字，或者進入進階模式[startAdvanceMode()]挑戰剛剛的單字題組填空，這次將不會提示字首字尾。
+
+[DEPLOY LOG]
+--最初將遊戲建置在netlify上，但netlify這個平台每次deploy都會花費credit，出現credit不夠的狀況。
+--增加了[請作者喝咖啡]按鈕，利用portaly.cc設置個人頁面
+--將遊戲改建置在firebase上
+--firebase提供更好的analytic功能，除了使用者來源之外，還能追蹤[請作者喝咖啡]是否有被點擊。
+--利用admin_upload.html將master_workbank.json放上firebase的資料庫
+
+
+[TO-DO LIST]
+--建立每個使用者的學習狀況資料庫，紀錄每個單字的熟悉程度
+--確認離線使用的可行性，如果將單字都存放在firebase的資料庫，還能夠離線玩遊戲嗎？
