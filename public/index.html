@@ -83,7 +83,7 @@
         .space-btn { width: 50% !important; max-width: 250px !important; font-size: 16px !important; letter-spacing: 2px; }
         
         .spelling-container { display: flex; flex-direction: column; align-items: center; gap: 15px; width: 100%; overflow: hidden; margin-bottom: 10px; flex-shrink: 0; }
-        .spelling-area { font-size: clamp(22px, 6vw, 45px); letter-spacing: 6px; font-weight: bold; color: #2c3e50; margin: 0; white-space: nowrap; }
+        .spelling-area { font-size: clamp(20px, 6vw, 45px); letter-spacing: 5px; font-weight: bold; color: #2c3e50; margin: 0; white-space: nowrap; }
         .tools-container { display: flex; gap: 15px; justify-content: center; }
         .tool-btn { color: white; border: none; border-radius: 50%; width: 45px; height: 45px; font-size: 22px; cursor: pointer; display: flex; justify-content: center; align-items: center; transition: transform 0.1s; flex-shrink: 0; }
         .speak-btn { background-color: #a29bfe; box-shadow: 0 4px 0 #6c5ce7; }
@@ -414,30 +414,6 @@
                 toast.innerHTML = '<span>🚀 升級中...</span>';
                 newWorker.postMessage({ action: 'skipWaiting' });
             });
-        }
-        // 根據單字長度，動態調整字體大小
-        function adjustFontSizeByLength(word) {
-            const spellingArea = document.querySelector('.spelling-area');
-            const flashcardEnglish = document.getElementById('flashcard-english');
-            
-            // 如果畫面上沒有這些元素，就跳過不執行（避免報錯）
-            if (!word) return;
-            
-            const len = word.length;
-            
-            if (len <= 6) {
-                // 短單字 (如 cat, apple)：使用原本的巨大字體
-                if(spellingArea) spellingArea.style.fontSize = "clamp(22px, 8vw, 45px)";
-                if(flashcardEnglish) flashcardEnglish.style.fontSize = "clamp(40px, 10vw, 55px)";
-            } else if (len <= 9) {
-                // 中長單字 (如 elephant, sandwich)：稍微縮小字體與間距
-                if(spellingArea) spellingArea.style.fontSize = "clamp(18px, 5vw, 35px)";
-                if(flashcardEnglish) flashcardEnglish.style.fontSize = "clamp(30px, 8vw, 45px)";
-            } else {
-                // 超長單字 (如 hippopotamus, strawberry)：使用最小字體以確保塞進一行
-                if(spellingArea) spellingArea.style.fontSize = "clamp(14px, 4vw, 28px)";
-                if(flashcardEnglish) flashcardEnglish.style.fontSize = "clamp(24px, 6vw, 38px)";
-            }
         }
 
         const firebaseConfig = {
@@ -1020,8 +996,6 @@
                 wordStats[currentWord.english].isSeen = true;
                 window.saveStats(); // 確保狀態立刻存檔
             }
-            // --- 👇 讓系統自動判斷長度並縮放字體 👇 ---
-            adjustFontSizeByLength(currentWord.english);
             
             if (gameState.isFlashcardMode) {
                 DOM.progress.innerText = `第 ${gameState.currentCount} / ${gameState.maxQuestions} 題 (複習)`;
