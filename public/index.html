@@ -141,7 +141,7 @@
 
     <div id="start-screen" class="screen active-screen">
         <button id="account-status-btn" class="status-btn" onclick="window.showAccountModal()">☁️💻</button>
-        <h1>🌟 單字大冒險（自動化測試中） 🌟</h1>
+        <h1>🌟 單字大冒險 🌟</h1>
         <h2 id="greeting-text" style="color: #34495e; font-size: 20px; display: none; margin-top: -5px; flex-shrink: 0;"></h2>
         <div id="current-bank-display" class="bank-info">題庫載入中...</div>
         
@@ -874,7 +874,7 @@
         window.startSequentialSession = function() {
             let startVal = parseInt(DOM.seqStart.value); let endVal = parseInt(DOM.seqEnd.value);
             if (isNaN(startVal) || isNaN(endVal) || startVal > endVal || startVal < 1) { alert("請輸入正確的編號範圍喔！（例如從 28 到 31）"); return; }
-            if ((endVal - startVal + 1) > 10) { alert("一次太多題會太累唷，我們先從最多10題開始吧"); return; }
+            //if ((endVal - startVal + 1) > 10) { alert("一次太多題會太累唷，我們先從最多10題開始吧"); return; }
             let pool = words.filter((w, index) => { let sn = w.serialnum !== undefined ? w.serialnum : (index + 1); return sn >= startVal && sn <= endVal; });
             if (pool.length === 0) { alert("這個範圍內沒有找到單字，請檢查一下編號喔！"); return; }
             gameState.isSequential = true; gameState.sequentialPool = pool.sort(() => Math.random() - 0.5); gameState.maxQuestions = gameState.sequentialPool.length; initSession();
