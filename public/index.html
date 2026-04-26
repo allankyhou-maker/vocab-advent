@@ -560,6 +560,27 @@
 
         const DOM = {};
 
+        // 💡 新增：根據單字長度動態調整字體大小，避免長單字溢出螢幕
+        function adjustFontSizeByLength(word) {
+            if (!word) return;
+            const len = word.length;
+            
+            // 處理拼字區的字體
+            if (DOM.spellingDisplay) {
+                if (len <= 6) DOM.spellingDisplay.style.fontSize = "clamp(22px, 8vw, 45px)";
+                else if (len <= 9) DOM.spellingDisplay.style.fontSize = "clamp(18px, 5vw, 35px)";
+                else DOM.spellingDisplay.style.fontSize = "clamp(14px, 4vw, 28px)";
+            }
+            
+            // 處理翻牌區的字體
+            const flashcardEnglish = document.getElementById('flashcard-english');
+            if (flashcardEnglish) {
+                if (len <= 6) flashcardEnglish.style.fontSize = "clamp(40px, 10vw, 55px)";
+                else if (len <= 9) flashcardEnglish.style.fontSize = "clamp(30px, 8vw, 45px)";
+                else flashcardEnglish.style.fontSize = "clamp(24px, 6vw, 38px)";
+            }
+        }
+
         window.addEventListener('DOMContentLoaded', () => {
             Object.assign(DOM, {
                 message: document.getElementById('message'), progress: document.getElementById('progress'),
@@ -996,6 +1017,9 @@
                 wordStats[currentWord.english].isSeen = true;
                 window.saveStats(); // 確保狀態立刻存檔
             }
+
+            // 👇 請在這裡插入這行，讓系統自動判斷長度並縮放字體 👇
+            adjustFontSizeByLength(currentWord.english);
             
             if (gameState.isFlashcardMode) {
                 DOM.progress.innerText = `第 ${gameState.currentCount} / ${gameState.maxQuestions} 題 (複習)`;
