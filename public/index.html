@@ -201,7 +201,7 @@
                 <div class="question-count-container">
                     <button class="count-btn" onclick="window.startRandomSession(5)">5 題</button>
                     <button class="count-btn" onclick="window.startRandomSession(10)">10 題</button>
-                    <button class="count-btn" onclick="window.startRandomSession()">20 題</button>
+                    <button class="count-btn" onclick="window.startRandomSession(20)">20 題</button>
                 </div>
             </div>
             
@@ -1120,22 +1120,54 @@
             let word = words[gameState.wordIndex].english; gameState.missingLetters = []; gameState.userInputs = [];
             
             if (gameState.isAdvanced) {
-                for (let i = 0; i < word.length; i++) { gameState.missingLetters.push(word[i]); gameState.userInputs.push(word[i] === " " ? " " : "_"); }
+                for (let i = 0; i < word.length; i++) { 
+                    gameState.missingLetters.push(word[i]); 
+                    gameState.userInputs.push(word[i] === " " ? " " : "_"); 
+                }
             } else {
-                if(word.length <= 2) { gameState.missingLetters.push(word[1] || word[0]); gameState.userInputs.push("_"); } 
-                else { for (let i = 1; i < word.length - 1; i++) { gameState.missingLetters.push(word[i]); gameState.userInputs.push("_"); } }
+                let wordsArray = word.split(' '); // 用空白把片語切開
+                
+                wordsArray.forEach((w, wordIndex) => {
+                    if (w.length <= 2) {
+                        // 單字長度 <= 2 的處理：留第一個字，缺第二個字
+                        gameState.missingLetters.push(w[0] || "");
+                        gameState.userInputs.push(w[0] || "");
+                        if (w.length === 2) {
+                            gameState.missingLetters.push(w[1]);
+                            gameState.userInputs.push("_");
+                        }
+                    } else {
+                        // 一般單字處理：留頭尾，中間挖空
+                        gameState.missingLetters.push(w[0]);
+                        gameState.userInputs.push(w[0]);
+                        
+                        for (let i = 1; i < w.length - 1; i++) { 
+                            gameState.missingLetters.push(w[i]); 
+                            gameState.userInputs.push("_"); 
+                        }
+                        
+                        gameState.missingLetters.push(w[w.length - 1]);
+                        gameState.userInputs.push(w[w.length - 1]);
+                    }
+                    
+                    // 如果不是最後一個單字，補上空白字元
+                    if (wordIndex < wordsArray.length - 1) {
+                        gameState.missingLetters.push(" ");
+                        gameState.userInputs.push(" ");
+                    }
+                });
             }
             updateSpellingDisplay(); createKeyboard();
         }
 
         function updateSpellingDisplay() {
-            let word = words[gameState.wordIndex].english; let displayStr = "";
-            let formattedInputs = gameState.userInputs.map(char => char === " " ? "\u00A0" : char);
-            if (gameState.isAdvanced) { displayStr = formattedInputs.join(" "); } 
-            else {
-                if(word.length <= 2) displayStr = word[0] + " " + formattedInputs.join(" "); 
-                else displayStr = word[0] + " " + formattedInputs.join(" ") + " " + word[word.length - 1]; 
-            }
+            let displayStr = "";
+            
+            // 讓每個字元中間都帶有空格，如果是遇到真正的空白，我們給它兩個不換行空格 (\u00A0\u00A0) 來加大間距
+            let formattedArray = gameState.userInputs.map(char => char === " " ? "\u00A0\u00A0\u00A0" : char);
+            
+            displayStr = formattedArray.join(" ");
+            
             DOM.spellingDisplay.innerText = displayStr.toUpperCase();
         }
 
@@ -1156,13 +1188,44 @@
 
         window.clearInput = function() {
             if (gameState.isTransitioning || !gameState.isActive) return;
-            gameState.userInputs = gameState.userInputs.map(char => char === " " ? " " : "_"); 
-            if (gameState.isAdvanced && gameState.hintLevel === 1) {
-                let correctWord = words[gameState.wordIndex].english; let firstIdx = 0; let lastIdx = correctWord.length - 1;
-                while(correctWord[firstIdx] === " " && firstIdx < correctWord.length) firstIdx++;
-                while(correctWord[lastIdx] === " " && lastIdx >= 0) lastIdx--;
-                gameState.userInputs[firstIdx] = correctWord[firstIdx]; gameState.userInputs[lastIdx] = correctWord[lastIdx];
+            
+            let correctWord = words[gameState.wordIndex].english;
+            
+            // 重新重置 userInputs，邏輯要跟一開始出題 (enterStage2) 一致
+            if (gameState.isAdvanced) {
+                gameState.userInputs = gameState.userInputs.map(char => char === " " ? " " : "_"); 
+                
+                if (gameState.hintLevel === 1) {
+                    let firstIdx = 0; let lastIdx = correctWord.length - 1;
+                    while(correctWord[firstIdx] === " " && firstIdx < correctWord.length) firstIdx++;
+                    while(correctWord[lastIdx] === " " && lastIdx >= 0) lastIdx--;
+                    gameState.userInputs[firstIdx] = correctWord[firstIdx]; gameState.userInputs[lastIdx] = correctWord[lastIdx];
+                }
+            } else {
+                // 一般模式下：保留所有空白，並且保留所有「不是底線且一開始就給的頭尾字母」
+                gameState.userInputs = gameState.missingLetters.map((char, index) => {
+                    if (char === " ") return " "; // 保留空白
+                    // 找出這個位置一開始是否就有給提示 (如果原本 enterStage2 就有給字母，就留著)
+                    let originalInput = "";
+                    let wordsArray = correctWord.split(' ');
+                    let charCount = 0;
+                    let isHintChar = false;
+                    
+                    for(let w of wordsArray){
+                        let wStart = charCount;
+                        let wEnd = charCount + w.length - 1;
+                        if(w.length <= 2) {
+                            if(index === wStart) isHintChar = true;
+                        } else {
+                            if(index === wStart || index === wEnd) isHintChar = true;
+                        }
+                        charCount += w.length + 1; // +1 for space
+                    }
+                    
+                    return isHintChar ? correctWord[index] : "_";
+                });
             }
+            
             updateSpellingDisplay(); playSound('keypress'); DOM.message.innerText = "已清空，再試一次吧！";
         }
 
