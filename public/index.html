@@ -1119,51 +1119,60 @@
             DOM.stage1.classList.add('hidden'); DOM.stage2.classList.remove('hidden'); document.getElementById('stage3-flashcard-answers').classList.add('hidden');
             let word = words[gameState.wordIndex].english; gameState.missingLetters = []; gameState.userInputs = [];
             
+            // 判斷是否為英文字母的常規表達式
+            const isLetter = (char) => /[a-zA-Z]/.test(char);
+
             if (gameState.isAdvanced) {
+                // 進階模式：所有「非字母」直接保留，字母全部變成底線
                 for (let i = 0; i < word.length; i++) { 
                     gameState.missingLetters.push(word[i]); 
-                    gameState.userInputs.push(word[i] === " " ? " " : "_"); 
+                    gameState.userInputs.push(isLetter(word[i]) ? "_" : word[i]); 
                 }
             } else {
-                let wordsArray = word.split(' '); // 用空白把片語切開
+                // 一般模式：先用「非字母字元」把字串切開來分析
+                // \b 是單字邊界，但為了更精準處理各種標點，我們逐字元掃描
+                let currentWordStart = -1;
                 
-                wordsArray.forEach((w, wordIndex) => {
-                    if (w.length <= 2) {
-                        // 單字長度 <= 2 的處理：留第一個字，缺第二個字
-                        gameState.missingLetters.push(w[0] || "");
-                        gameState.userInputs.push(w[0] || "");
-                        if (w.length === 2) {
-                            gameState.missingLetters.push(w[1]);
-                            gameState.userInputs.push("_");
-                        }
-                    } else {
-                        // 一般單字處理：留頭尾，中間挖空
-                        gameState.missingLetters.push(w[0]);
-                        gameState.userInputs.push(w[0]);
-                        
-                        for (let i = 1; i < w.length - 1; i++) { 
-                            gameState.missingLetters.push(w[i]); 
-                            gameState.userInputs.push("_"); 
-                        }
-                        
-                        gameState.missingLetters.push(w[w.length - 1]);
-                        gameState.userInputs.push(w[w.length - 1]);
-                    }
+                for (let i = 0; i < word.length; i++) {
+                    let char = word[i];
+                    gameState.missingLetters.push(char);
                     
-                    // 如果不是最後一個單字，補上空白字元
-                    if (wordIndex < wordsArray.length - 1) {
-                        gameState.missingLetters.push(" ");
-                        gameState.userInputs.push(" ");
+                    if (!isLetter(char)) {
+                        // 如果遇到標點符號或空白，直接保留
+                        gameState.userInputs.push(char);
+                        currentWordStart = -1; // 重置單字起始點
+                    } else {
+                        if (currentWordStart === -1) currentWordStart = i; // 標記單字的開頭
+                        
+                        // 判斷這個字母是不是這個獨立單字的結尾
+                        let isWordEnd = (i === word.length - 1) || (!isLetter(word[i + 1]));
+                        
+                        // 計算這個獨立單字的長度
+                        let wordLength = 0;
+                        let tempIdx = currentWordStart;
+                        while(tempIdx < word.length && isLetter(word[tempIdx])) { wordLength++; tempIdx++; }
+
+                        // 判斷是否給予提示
+                        let giveHint = false;
+                        if (wordLength <= 2) {
+                            giveHint = (i === currentWordStart); // 短單字只給字首
+                        } else {
+                            giveHint = (i === currentWordStart || isWordEnd); // 長單字給字首跟字尾
+                        }
+                        
+                        gameState.userInputs.push(giveHint ? char : "_");
                     }
-                });
+                }
             }
+
             updateSpellingDisplay(); createKeyboard();
         }
 
         function updateSpellingDisplay() {
             let displayStr = "";
             
-            // 讓每個字元中間都帶有空格，如果是遇到真正的空白，我們給它兩個不換行空格 (\u00A0\u00A0) 來加大間距
+            // 將所有元素加上空格，如果是遇到真正的空白 " "，則給它更寬的間距 (\u00A0\u00A0\u00A0)
+            // 這樣逗號或句號也會像字母一樣，有基本的間隔，而不會跟前面的字黏死。
             let formattedArray = gameState.userInputs.map(char => char === " " ? "\u00A0\u00A0\u00A0" : char);
             
             displayStr = formattedArray.join(" ");
@@ -1190,39 +1199,41 @@
             if (gameState.isTransitioning || !gameState.isActive) return;
             
             let correctWord = words[gameState.wordIndex].english;
+            const isLetter = (char) => /[a-zA-Z]/.test(char);
             
-            // 重新重置 userInputs，邏輯要跟一開始出題 (enterStage2) 一致
             if (gameState.isAdvanced) {
-                gameState.userInputs = gameState.userInputs.map(char => char === " " ? " " : "_"); 
+                // 進階模式重置：保留所有非字母
+                gameState.userInputs = gameState.missingLetters.map(char => isLetter(char) ? "_" : char); 
                 
+                // 處理提示功能 (如果按了 💡)
                 if (gameState.hintLevel === 1) {
                     let firstIdx = 0; let lastIdx = correctWord.length - 1;
-                    while(correctWord[firstIdx] === " " && firstIdx < correctWord.length) firstIdx++;
-                    while(correctWord[lastIdx] === " " && lastIdx >= 0) lastIdx--;
-                    gameState.userInputs[firstIdx] = correctWord[firstIdx]; gameState.userInputs[lastIdx] = correctWord[lastIdx];
+                    while(!isLetter(correctWord[firstIdx]) && firstIdx < correctWord.length) firstIdx++;
+                    while(!isLetter(correctWord[lastIdx]) && lastIdx >= 0) lastIdx--;
+                    
+                    if (firstIdx < correctWord.length) gameState.userInputs[firstIdx] = correctWord[firstIdx];
+                    if (lastIdx >= 0) gameState.userInputs[lastIdx] = correctWord[lastIdx];
                 }
             } else {
-                // 一般模式下：保留所有空白，並且保留所有「不是底線且一開始就給的頭尾字母」
-                gameState.userInputs = gameState.missingLetters.map((char, index) => {
-                    if (char === " ") return " "; // 保留空白
-                    // 找出這個位置一開始是否就有給提示 (如果原本 enterStage2 就有給字母，就留著)
-                    let originalInput = "";
-                    let wordsArray = correctWord.split(' ');
-                    let charCount = 0;
-                    let isHintChar = false;
-                    
-                    for(let w of wordsArray){
-                        let wStart = charCount;
-                        let wEnd = charCount + w.length - 1;
-                        if(w.length <= 2) {
-                            if(index === wStart) isHintChar = true;
-                        } else {
-                            if(index === wStart || index === wEnd) isHintChar = true;
-                        }
-                        charCount += w.length + 1; // +1 for space
+                // 一般模式重置：我們直接重複一次出題邏輯來決定哪些要留著
+                let currentWordStart = -1;
+                gameState.userInputs = gameState.missingLetters.map((char, i) => {
+                    if (!isLetter(char)) {
+                        currentWordStart = -1;
+                        return char; // 保留標點與空白
                     }
                     
-                    return isHintChar ? correctWord[index] : "_";
+                    if (currentWordStart === -1) currentWordStart = i;
+                    let isWordEnd = (i === correctWord.length - 1) || (!isLetter(correctWord[i + 1]));
+                    
+                    let wordLength = 0; let tempIdx = currentWordStart;
+                    while(tempIdx < correctWord.length && isLetter(correctWord[tempIdx])) { wordLength++; tempIdx++; }
+
+                    let giveHint = false;
+                    if (wordLength <= 2) giveHint = (i === currentWordStart);
+                    else giveHint = (i === currentWordStart || isWordEnd);
+                    
+                    return giveHint ? char : "_";
                 });
             }
             
