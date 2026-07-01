@@ -794,14 +794,14 @@
                 if(DOM.currentBankDisplay) DOM.currentBankDisplay.innerText = `連線至雲端題庫中...`;
                 wordBanks = await window.fetchWordsFromCloud();
                 
-                // 💡 優化：先去 localStorage 找上次玩哪個題庫
                 let savedBank = localStorage.getItem('nanaCurrentBank');
                 
-                // 💡 如果有存檔，且雲端剛好也有這個題庫，就用舊的；否則才抓第一個
-                if (savedBank && wordBanks[savedBank]) {
+                // 💡 排除隱藏陣列，並優先取用排序後的第一個題庫
+                if (savedBank && wordBanks[savedBank] && savedBank !== '_bankOrder') {
                     currentBankName = savedBank;
                 } else {
-                    currentBankName = Object.keys(wordBanks)[0];
+                    let bankNames = wordBanks._bankOrder || Object.keys(wordBanks).filter(k => k !== '_bankOrder');
+                    currentBankName = bankNames[0];
                 }
                 
                 words = wordBanks[currentBankName];
@@ -867,7 +867,13 @@
         
         window.showBankScreen = function() {
             DOM.bankList.innerHTML = '';
-            for (let bankName in wordBanks) {
+            
+            // 💡 讀取自訂順序，若舊版資料無此陣列則退回使用預設 Object.keys
+            let bankNames = wordBanks._bankOrder || Object.keys(wordBanks);
+            
+            for (let bankName of bankNames) {
+                if (bankName === '_bankOrder') continue; // 💡 略過設定順序用的隱藏陣列
+                
                 let btn = document.createElement('button'); btn.className = 'bank-option-btn';
                 let wordCount = wordBanks[bankName].length;
                 btn.innerText = bankName === currentBankName ? `⭐ ${bankName} (${wordCount}字)` : `${bankName} (${wordCount}字)`;
@@ -876,7 +882,6 @@
                 btn.onclick = async () => {
                     currentBankName = bankName; 
                     words = wordBanks[bankName]; 
-                    // 💡 優化：把選擇的題庫存進瀏覽器記憶裡
                     localStorage.setItem('nanaCurrentBank', currentBankName);
                     
                     await initWordStats(); 

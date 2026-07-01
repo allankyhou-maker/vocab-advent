@@ -70,28 +70,30 @@
                 
                 // 開始解析並轉換
                 const jsonData = parseTextToJson(textContent);
-                // 💡 客製化 JSON 排版：讓每個單字物件保持在單一列，緊湊又好讀
+                
+                // 💡 客製化 JSON 排版，並在最前方寫入 _bankOrder 順序陣列
                 generatedJsonString = "{\n";
-                const categories = Object.keys(jsonData);
+                
+                // 寫入順序陣列
+                generatedJsonString += `  "_bankOrder": ${JSON.stringify(jsonData._bankOrder)}`;
+                
+                const categories = jsonData._bankOrder;
+                if (categories.length > 0) generatedJsonString += ",\n";
                 
                 categories.forEach((cat, index) => {
                     generatedJsonString += `  "${cat}": [\n`;
                     
                     const wordLines = jsonData[cat].map(w => {
-                        // 防止單字或中文解釋裡剛好有雙引號，做一下安全跳脫
                         let safeEng = w.english.replace(/"/g, '\\"');
                         let safeCh = w.chineseHTML.replace(/"/g, '\\"');
                         return `    {"serialnum": ${w.serialnum}, "english": "${safeEng}", "chineseHTML": "${safeCh}"}`;
                     });
                     
-                    // 將陣列裡的單字用逗號跟換行連起來
                     generatedJsonString += wordLines.join(",\n");
-                    
-                    // 判斷是不是最後一個分類，來決定要不要加逗號
                     generatedJsonString += `\n  ]${index < categories.length - 1 ? ',' : ''}\n`;
                 });
                 generatedJsonString += "}";
-                
+
                 document.getElementById('json-preview').value = generatedJsonString;
                 document.getElementById('download-btn').disabled = false;
             };
@@ -101,31 +103,31 @@
         // 🧠 核心解析邏輯
         function parseTextToJson(text) {
             const lines = text.split('\n');
-            const result = {};
+            // 💡 建立 _bankOrder 陣列來記憶題庫順序
+            const result = { _bankOrder: [] }; 
             let currentCategory = "未分類題庫";
             let needsBpmf = false; 
-            
-            // 💡 新增：用來自動計算 serialnum 的計數器
             let serialCounter = 1; 
 
             for (let line of lines) {
                 line = line.trim();
                 if (!line) continue; 
 
-                // 檢查是否為分類標題 (例如：[基礎單字庫][bpmf=y])
                 if (line.startsWith('[')) {
                     let catMatch = line.match(/^\[(.*?)\]/);
                     if (catMatch) {
                         currentCategory = catMatch[1].trim();
-                        if (!result[currentCategory]) result[currentCategory] = [];
+                        if (!result[currentCategory]) {
+                            result[currentCategory] = [];
+                            // 💡 遇到新的題庫名稱，立刻記錄它的順序
+                            result._bankOrder.push(currentCategory);
+                        }
                     }
                     
-                    // 偵測注音開關標籤
                     if (line.includes('[bpmf=y]')) needsBpmf = true;
                     else if (line.includes('[bpmf=n]')) needsBpmf = false;
                     else needsBpmf = false; 
                     
-                    // 💡 關鍵：遇到新的分類題庫時，計數器歸零，重新從 1 開始編號
                     serialCounter = 1; 
                     continue;
                 }
