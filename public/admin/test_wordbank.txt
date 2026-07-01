@@ -1,6 +1,0 @@
-[一上單字表][bpmf=y]
-dog = 狗
-cat = 貓
-[高級單字表][bpmf=n]
-volcano = 火山
-electrolyte = 電解質

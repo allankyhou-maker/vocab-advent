@@ -70,9 +70,29 @@
                 
                 // 開始解析並轉換
                 const jsonData = parseTextToJson(textContent);
-                generatedJsonString = JSON.stringify(jsonData, null, 2);
-                document.getElementById('json-preview').value = generatedJsonString;
+                // 💡 客製化 JSON 排版：讓每個單字物件保持在單一列，緊湊又好讀
+                generatedJsonString = "{\n";
+                const categories = Object.keys(jsonData);
                 
+                categories.forEach((cat, index) => {
+                    generatedJsonString += `  "${cat}": [\n`;
+                    
+                    const wordLines = jsonData[cat].map(w => {
+                        // 防止單字或中文解釋裡剛好有雙引號，做一下安全跳脫
+                        let safeEng = w.english.replace(/"/g, '\\"');
+                        let safeCh = w.chineseHTML.replace(/"/g, '\\"');
+                        return `    {"serialnum": ${w.serialnum}, "english": "${safeEng}", "chineseHTML": "${safeCh}"}`;
+                    });
+                    
+                    // 將陣列裡的單字用逗號跟換行連起來
+                    generatedJsonString += wordLines.join(",\n");
+                    
+                    // 判斷是不是最後一個分類，來決定要不要加逗號
+                    generatedJsonString += `\n  ]${index < categories.length - 1 ? ',' : ''}\n`;
+                });
+                generatedJsonString += "}";
+                
+                document.getElementById('json-preview').value = generatedJsonString;
                 document.getElementById('download-btn').disabled = false;
             };
             reader.readAsText(file);
