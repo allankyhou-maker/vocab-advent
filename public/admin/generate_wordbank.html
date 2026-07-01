@@ -1,0 +1,245 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>題庫 JSON 生成器 (支援自動注音)</title>
+    
+    <script src="https://unpkg.com/pinyin-pro"></script>
+
+    <style>
+        body { font-family: 'Arial', sans-serif; background-color: #f8f9fa; display: flex; flex-direction: column; align-items: center; padding: 20px; color: #2c3e50; }
+        .container { background: white; padding: 30px; border-radius: 15px; box-shadow: 0 5px 15px rgba(0,0,0,0.1); width: 95%; max-width: 900px; text-align: center; }
+        h1 { color: #3498db; margin-top: 0; }
+        
+        .upload-area { border: 2px dashed #bdc3c7; padding: 30px; border-radius: 10px; margin-bottom: 20px; background: #ecf0f1; transition: 0.2s; }
+        .upload-area:hover { border-color: #3498db; background: #e8f4f8; }
+        
+        input[type="file"] { font-size: 18px; margin-top: 10px; cursor: pointer; }
+        
+        .btn { background-color: #2ecc71; color: white; border: none; padding: 12px 25px; font-size: 18px; border-radius: 10px; cursor: pointer; font-weight: bold; box-shadow: 0 4px 0 #27ae60; transition: transform 0.1s; margin: 10px; }
+        .btn:active { transform: translateY(4px); box-shadow: none; }
+        .btn:disabled { background-color: #95a5a6; box-shadow: 0 4px 0 #7f8c8d; cursor: not-allowed; }
+        
+        .preview-area { display: flex; gap: 15px; margin-top: 20px; text-align: left; height: 400px; }
+        .box { flex: 1; display: flex; flex-direction: column; }
+        .box h3 { margin: 0 0 10px 0; color: #555; }
+        textarea { flex: 1; padding: 15px; border-radius: 8px; border: 1px solid #bdc3c7; font-size: 14px; font-family: monospace; resize: none; background: #fdfdfd; line-height: 1.5; }
+    </style>
+</head>
+<body>
+
+    <div class="container">
+        <h1>✨ 題庫 JSON 生成器</h1>
+        <p style="color: #7f8c8d; margin-bottom: 25px; line-height: 1.6;">
+            請選擇你的 <b>master_wordbank.txt</b> 檔案。<br>
+            系統會自動偵測 <b>[bpmf=y]</b> 標籤，並為該題庫的中文自動生成標準的注音格式！
+        </p>
+        
+        <div class="upload-area">
+            <input type="file" id="txt-file-input" accept=".txt">
+        </div>
+        
+        <button id="download-btn" class="btn" disabled>⬇️ 下載 master_wordbank.json</button>
+
+        <div class="preview-area">
+            <div class="box">
+                <h3>讀取到的 TXT 內容</h3>
+                <textarea id="txt-preview" readonly placeholder="這裡會顯示 TXT 檔案的內容..."></textarea>
+            </div>
+            <div class="box">
+                <h3>轉換後的 JSON 結果</h3>
+                <textarea id="json-preview" readonly placeholder="轉換後的 JSON 會顯示在這裡..."></textarea>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const { pinyin } = pinyinPro;
+        let generatedJsonString = "";
+
+        // 監聽檔案上傳
+        document.getElementById('txt-file-input').addEventListener('change', function(event) {
+            const file = event.target.files[0];
+            if (!file) return;
+
+            const reader = new FileReader();
+            reader.onload = function(e) {
+                const textContent = e.target.result;
+                document.getElementById('txt-preview').value = textContent;
+                
+                // 開始解析並轉換
+                const jsonData = parseTextToJson(textContent);
+                generatedJsonString = JSON.stringify(jsonData, null, 2);
+                document.getElementById('json-preview').value = generatedJsonString;
+                
+                document.getElementById('download-btn').disabled = false;
+            };
+            reader.readAsText(file);
+        });
+
+        // 🧠 核心解析邏輯
+        function parseTextToJson(text) {
+            const lines = text.split('\n');
+            const result = {};
+            let currentCategory = "未分類題庫";
+            let needsBpmf = false; 
+            
+            // 💡 新增：用來自動計算 serialnum 的計數器
+            let serialCounter = 1; 
+
+            for (let line of lines) {
+                line = line.trim();
+                if (!line) continue; 
+
+                // 檢查是否為分類標題 (例如：[基礎單字庫][bpmf=y])
+                if (line.startsWith('[')) {
+                    let catMatch = line.match(/^\[(.*?)\]/);
+                    if (catMatch) {
+                        currentCategory = catMatch[1].trim();
+                        if (!result[currentCategory]) result[currentCategory] = [];
+                    }
+                    
+                    // 偵測注音開關標籤
+                    if (line.includes('[bpmf=y]')) needsBpmf = true;
+                    else if (line.includes('[bpmf=n]')) needsBpmf = false;
+                    else needsBpmf = false; 
+                    
+                    // 💡 關鍵：遇到新的分類題庫時，計數器歸零，重新從 1 開始編號
+                    serialCounter = 1; 
+                    continue;
+                }
+
+                // 檢查是否為單字配對 (例如：cat = 貓咪)
+                if (line.includes('=')) {
+                    const firstEqualsIndex = line.indexOf('=');
+                    let englishPart = line.substring(0, firstEqualsIndex).trim();
+                    const chinesePart = line.substring(firstEqualsIndex + 1).trim();
+
+                    // 💡 智慧過濾：如果開頭不小心打了 "1. ", "2)", "10." 等數字標號，自動將其移除
+                    englishPart = englishPart.replace(/^[0-9]+[\.\)\]]\s*/, '');
+
+                    if (!result[currentCategory]) result[currentCategory] = [];
+
+                    if (englishPart && chinesePart) {
+                        let finalChineseHTML = "";
+                        
+                        if (needsBpmf) {
+                            // 注音轉換邏輯
+                            let pyArray = pinyin(chinesePart, { type: 'array', toneType: 'num', nonZh: 'removed' });
+                            let pinyinIndex = 0;
+
+                            for (let i = 0; i < chinesePart.length; i++) {
+                                let char = chinesePart[i];
+                                if (/[\u4e00-\u9fa5]/.test(char)) {
+                                    let py = pyArray[pinyinIndex] || pinyin(char, { toneType: 'num' });
+                                    let zhuyin = pinyinToZhuyin(py);
+                                    finalChineseHTML += `<ruby>${char}<rt>${zhuyin}</rt></ruby>`;
+                                    pinyinIndex++;
+                                } else {
+                                    finalChineseHTML += char;
+                                }
+                            }
+                        } else {
+                            finalChineseHTML = chinesePart; 
+                        }
+
+                        // 💡 將 serialnum 正式寫入 JSON 物件中
+                        result[currentCategory].push({
+                            serialnum: serialCounter++, // 寫入目前的數字，然後計數器自動 +1
+                            english: englishPart,
+                            chineseHTML: finalChineseHTML
+                        });
+                    }
+                }
+            }
+            return result;
+        }
+
+        // 🪄 羅馬拼音轉注音 (Pinyin to Bopomofo) 的專屬引擎
+        function pinyinToZhuyin(py) {
+            if(!py) return "";
+            
+            // 抓取聲調數字 (pinyin-pro 將輕聲標為 0)
+            let toneMatch = py.match(/[0-5]/);
+            let toneNum = toneMatch ? toneMatch[0] : "1";
+            let text = py.replace(/[0-5]/g, "").toLowerCase();
+
+            // 預處理特殊拼音規則
+            text = text.replace(/ü/g, 'v');
+            if (/^[jqx]u/.test(text)) text = text.replace("u", "v"); // ju, qu, xu
+            
+            // y 與 w 系列轉換
+            text = text.replace(/^yi?/, 'i');
+            text = text.replace(/^yu/, 'v');
+            text = text.replace(/^y/, 'i');
+            text = text.replace(/^wu?/, 'u');
+            text = text.replace(/^w/, 'u');
+
+            // 處理整體認讀音節 (移除 i)
+            const wholeSyllables = ['zhi', 'chi', 'shi', 'ri', 'zi', 'ci', 'si'];
+            if (wholeSyllables.includes(text)) text = text.slice(0, -1);
+
+            // 處理縮寫韻母
+            text = text.replace(/ui$/, 'uei');
+            text = text.replace(/iu$/, 'iou');
+            text = text.replace(/un$/, 'uen');
+
+            // 聲母與韻母對照表
+            const initials = {
+                b: 'ㄅ', p: 'ㄆ', m: 'ㄇ', f: 'ㄈ', d: 'ㄉ', t: 'ㄊ', n: 'ㄋ', l: 'ㄌ',
+                g: 'ㄍ', k: 'ㄎ', h: 'ㄏ', j: 'ㄐ', q: 'ㄑ', x: 'ㄒ',
+                zh: 'ㄓ', ch: 'ㄔ', sh: 'ㄕ', r: 'ㄖ', z: 'ㄗ', c: 'ㄘ', s: 'ㄙ'
+            };
+            const finals = {
+                a: 'ㄚ', o: 'ㄛ', e: 'ㄜ', ea: 'ㄝ', ai: 'ㄞ', ei: 'ㄟ', ao: 'ㄠ', ou: 'ㄡ',
+                an: 'ㄢ', en: 'ㄣ', ang: 'ㄤ', eng: 'ㄥ', er: 'ㄦ',
+                i: 'ㄧ', u: 'ㄨ', v: 'ㄩ',
+                ia: 'ㄧㄚ', io: 'ㄧㄛ', ie: 'ㄧㄝ', iai: 'ㄧㄞ', iao: 'ㄧㄠ', iou: 'ㄧㄡ',
+                ian: 'ㄧㄢ', in: 'ㄧㄣ', iang: 'ㄧㄤ', ing: 'ㄧㄥ',
+                ua: 'ㄨㄚ', uo: 'ㄨㄛ', uai: 'ㄨㄞ', uei: 'ㄨㄟ', uan: 'ㄨㄢ', uen: 'ㄨㄣ',
+                uang: 'ㄨㄤ', ueng: 'ㄨㄥ',
+                ve: 'ㄩㄝ', van: 'ㄩㄢ', vn: 'ㄩㄣ', iong: 'ㄩㄥ'
+            };
+            const tones = {'1': '', '2': 'ˊ', '3': 'ˇ', '4': 'ˋ', '5': '˙', '0': '˙'};
+
+            let initial = "", final = "";
+
+            if (text.startsWith("zh") || text.startsWith("ch") || text.startsWith("sh")) {
+                initial = text.substring(0, 2);
+                final = text.substring(2);
+            } else if (initials[text[0]]) {
+                initial = text[0];
+                final = text.substring(1);
+            } else {
+                final = text;
+            }
+
+            // 組裝注音符號
+            let bpmf = "";
+            if (initials[initial]) bpmf += initials[initial];
+            if (finals[final]) bpmf += finals[final];
+
+            // 輕聲 (0 或 5) 標在注音符號前方，其餘標在後方
+            if (toneNum === '5' || toneNum === '0') bpmf = tones[toneNum] + bpmf;
+            else bpmf += tones[toneNum];
+
+            return bpmf;
+        }
+
+        // 下載按鈕邏輯
+        document.getElementById('download-btn').addEventListener('click', function() {
+            if (!generatedJsonString) return;
+            const blob = new Blob([generatedJsonString], { type: "application/json" });
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = "master_wordbank.json";
+            document.body.appendChild(a);
+            a.click();
+            document.body.removeChild(a);
+            URL.revokeObjectURL(url);
+        });
+    </script>
+</body>
+</html>
