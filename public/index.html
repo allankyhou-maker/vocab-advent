@@ -323,6 +323,7 @@
             <h2 id="modal-title">☁️💻 訪客模式</h2>
             <p id="modal-desc">目前單字進度保存在這台設備的瀏覽器中。<br>若清除快取，進度可能會消失喔！</p>
             <button id="google-link-btn" class="google-btn" onclick="window.linkWithGoogle()">🔗 綁定帳號永久保存</button>
+            <button id="logout-btn" class="google-btn" style="background-color: #ff7675; box-shadow: 0 4px 0 #d63031; display: none;" onclick="window.logoutAccount()">🚪 登出帳號</button>
             <button class="close-modal-btn" onclick="window.closeAccountModal()">知道囉，先這樣</button>
         </div>
     </div>
@@ -360,7 +361,7 @@
         import { initializeApp } from "https://www.gstatic.com/firebasejs/12.11.0/firebase-app.js";
         import { getAnalytics, logEvent } from "https://www.gstatic.com/firebasejs/12.11.0/firebase-analytics.js";
         import { initializeFirestore, persistentLocalCache, persistentMultipleTabManager, doc, getDoc, setDoc } from "https://www.gstatic.com/firebasejs/12.11.0/firebase-firestore.js";
-        import { getAuth, signInAnonymously, onAuthStateChanged, GoogleAuthProvider, linkWithPopup, signInWithCredential } from "https://www.gstatic.com/firebasejs/12.11.0/firebase-auth.js";
+        import { getAuth, signInAnonymously, onAuthStateChanged, GoogleAuthProvider, linkWithPopup, signInWithCredential, signOut } from "https://www.gstatic.com/firebasejs/12.11.0/firebase-auth.js";
 
         // 💡 升級版魔法陣：會偵測新版本並跳出提示
         if ('serviceWorker' in navigator) {
@@ -515,6 +516,28 @@
                 } else { alert("綁定時發生錯誤，請稍後再試。"); }
             } finally {
                 btn.innerText = "🔗 綁定帳號永久保存"; btn.disabled = false;
+            }
+        };
+
+        // 執行登出動作
+        window.logoutAccount = async function() {
+            if (confirm("確定要登出嗎？登出後系統會切換回全新的訪客模式喔！")) {
+                try {
+                    const btn = document.getElementById('logout-btn');
+                    btn.innerText = "登出中..."; btn.disabled = true;
+                    
+                    await signOut(auth);
+                    
+                    if(typeof window.closeAccountModal === 'function') window.closeAccountModal();
+                    
+                    // 登出後強制重新整理網頁，讓系統自動觸發新的匿名訪客登入
+                    window.location.reload(); 
+                } catch (error) {
+                    console.error("登出失敗:", error);
+                    alert("登出時發生錯誤，請稍後再試。");
+                    document.getElementById('logout-btn').innerText = "🚪 登出帳號"; 
+                    document.getElementById('logout-btn').disabled = false;
+                }
             }
         };
 
@@ -753,9 +776,15 @@
             let isAnon = !document.getElementById('account-status-btn').innerText.includes("✨");
             document.getElementById('modal-title').innerText = isAnon ? "☁️💻 訪客模式" : "☁️✨ 永久保護中";
             document.getElementById('modal-desc').innerHTML = isAnon 
-                ? "目前單字進度保存在這台設備中。<br>若清除瀏覽器紀錄，進度可能會消失。<br><br><b>建議綁定帳號，永久保存孩子的心血！</b>" 
-                : "太棒了！單字進度已與您的 Google 帳號綁定。<br>無論使用哪台設備，登入後都會自動同步！";
+                ? "目前單字進度保存在這台設備中。<br>若清除瀏覽器紀錄，進度可能會消失。<br><br><b>建議綁定帳號，永久保存學習心血！</b>" 
+                : "太棒了！單字進度已與 Google 帳號綁定。<br>無論使用哪台設備，登入後都會自動同步！";
+            
+            // 👇 修改這裡，動態控制兩顆按鈕的顯示與隱藏 👇
             document.getElementById('google-link-btn').style.display = isAnon ? "flex" : "none";
+            
+            let logoutBtn = document.getElementById('logout-btn');
+            if (logoutBtn) logoutBtn.style.display = isAnon ? "none" : "flex";
+            
             document.getElementById('account-modal').style.display = "flex";
         };
         window.closeAccountModal = function() { document.getElementById('account-modal').style.display = "none"; };
