@@ -1,4 +1,4 @@
-const CACHE_NAME = 'vocab-adventure-v5.4'; // 💡 升級到 v5，確保舊的快取被清除
+const CACHE_NAME = 'vocab-adventure-v5.5'; // 💡 升級到 v5，確保舊的快取被清除
 const ASSETS = [
   '/',
   '/index.html',
@@ -33,7 +33,8 @@ self.addEventListener('fetch', (e) => {
   // 💡 規則 A：絕對不要干涉 Firebase 的 API 請求 (firestore, auth 等)
   // 交給剛才我們在 HTML 寫的 enableIndexedDbPersistence 去處理離線資料
   if (e.request.url.includes('firestore.googleapis.com') || 
-      e.request.url.includes('securetoken.googleapis.com')) {
+      e.request.url.includes('securetoken.googleapis.com') ||
+      e.request.url.includes('/admin/')) { // 👈 加上這行，發放專屬通行證
       return; 
   }
 
