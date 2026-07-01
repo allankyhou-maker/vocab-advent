@@ -932,7 +932,14 @@
             //if ((endVal - startVal + 1) > 10) { alert("一次太多題會太累唷，我們先從最多10題開始吧"); return; }
             let pool = words.filter((w, index) => { let sn = w.serialnum !== undefined ? w.serialnum : (index + 1); return sn >= startVal && sn <= endVal; });
             if (pool.length === 0) { alert("這個範圍內沒有找到單字，請檢查一下編號喔！"); return; }
-            gameState.isSequential = true; gameState.sequentialPool = pool.sort(() => Math.random() - 0.5); gameState.maxQuestions = gameState.sequentialPool.length; initSession();
+            gameState.isSequential = true; 
+            gameState.sequentialPool = pool.sort((a, b) => {
+                let snA = a.serialnum !== undefined ? a.serialnum : 0;
+                let snB = b.serialnum !== undefined ? b.serialnum : 0;
+                return snA - snB;
+            });
+            gameState.maxQuestions = gameState.sequentialPool.length; 
+            initSession();
         }
 
         // --- 🧠 智能出題模式控制邏輯 ---
