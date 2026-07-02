@@ -1,4 +1,4 @@
-const CACHE_NAME = 'vocab-adventure-v6.2'; // 💡 更新後手動更新版本，確保舊的快取被清除
+const CACHE_NAME = 'vocab-adventure-v6.3'; // 💡 更新後手動更新版本，確保舊的快取被清除
 const ASSETS = [
   '/',
   '/index.html',

@@ -304,6 +304,7 @@
         <div class="bottom-dock" style="display: flex; flex-direction: column; gap: 10px;">
             <button id="review-btn" class="setting-btn hidden" style="background-color: #f39c12; color: white; box-shadow: 0 5px 0 #e67e22; width: 100%; margin: 0;" onclick="window.showReviewScreen()">👀 複習不熟單字</button>
             <button id="adv-mode-btn" class="setting-btn adv-btn hidden" style="width: 100%; margin: 0;" onclick="window.startAdvancedMode()">🚀 挑戰進階模式</button>
+            <button id="share-btn" class="setting-btn hidden" style="background-color: #9b59b6; color: white; box-shadow: 0 5px 0 #8e44ad; width: 100%; margin: 0;" onclick="window.openShareScreen()">📸 製作專屬戰報</button>
             <button class="restart-btn" style="margin: 0;" onclick="window.showStartScreen()">返回主畫面</button>
         </div>
     </div>
@@ -649,7 +650,7 @@
                 reviewBtn: document.getElementById('review-btn'), advModeBtn: document.getElementById('adv-mode-btn'),
                 reviewList: document.getElementById('review-list'), seqStart: document.getElementById('seq-start'),
                 seqEnd: document.getElementById('seq-end'), seqReviewTitle: document.getElementById('seq-review-title'),
-                bankList: document.getElementById('bank-list')
+                bankList: document.getElementById('bank-list'),
                 shareBtn: document.getElementById('share-btn')
             });
             loadWordBanks();
@@ -1427,7 +1428,6 @@
                 if (window.starTimeouts && window.starTimeouts.length > 0) {
                     window.starTimeouts.forEach(clearTimeout);
                     window.starTimeouts = [];
-                    // 瞬間讓所有還沒彈出來的星星出現
                     document.querySelectorAll('.star-svg:not(.pop)').forEach(el => el.classList.add('pop'));
                 }
             };
@@ -1448,25 +1448,27 @@
                 DOM.endEquation.innerText = `🤩 記憶猶新：${gameState.flashcardStats.good} 題\n🤔 好像還行：${gameState.flashcardStats.ok} 題\n😵 有點不熟：${gameState.flashcardStats.bad} 題`;
                 if (gameState.flashcardStats.bad > 0) DOM.reviewBtn.classList.remove('hidden'); else DOM.reviewBtn.classList.add('hidden'); 
                 DOM.advModeBtn.classList.add('hidden');
-                if (DOM.shareBtn) DOM.shareBtn.classList.add('hidden'); // 💡 改用 DOM.shareBtn
+                if (DOM.shareBtn) DOM.shareBtn.classList.add('hidden'); 
                 return; 
             }
 
             let fullStars = 0, halfStars = 0, zeroStars = 0, totalScore = 0; let needsReview = false;
+            
             if (currentScores.length === 0) { 
                 DOM.endEquation.innerText = "這次沒有完成任何題目，下次繼續加油喔！"; 
                 DOM.reviewBtn.classList.add('hidden'); DOM.advModeBtn.classList.add('hidden'); 
-                if (DOM.shareBtn) DOM.shareBtn.classList.add('hidden'); // 💡 改用 DOM.shareBtn
+                if (DOM.shareBtn) DOM.shareBtn.classList.add('hidden'); 
                 return; 
             }
 
-            // 💡 確保有完成題目，就一定會顯示按鈕
+            // 💡 只要有答題，就顯示分享按鈕
             if (DOM.shareBtn) DOM.shareBtn.classList.remove('hidden'); 
             window.starTimeouts = [];
 
             currentScores.forEach((score, index) => {
                 totalScore += score; if (score === 1) fullStars++; else if (score === 0.5) halfStars++; else zeroStars++;
-                if (score < 1) needsReview = true; 
+                if (score < 1) needsReview = true; // 只要有非滿分的題目，就需要複習
+                
                 let fillId = score === 0.5 ? 'url(#half-star-gradient)' : (score === 1 ? '#ffca28' : '#ecf0f1'); 
                 let strokeColor = score === 0 ? '#bdc3c7' : '#f39c12';
                 let svgHTML = gameState.isAdvanced 
@@ -1474,14 +1476,16 @@
                     : `<svg class="star-svg" viewBox="0 0 24 24" fill="${fillId}" stroke="${strokeColor}" stroke-width="2"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2" /></svg>`;
                 let wrapper = document.createElement('div'); wrapper.innerHTML = svgHTML; let starEl = wrapper.firstElementChild; DOM.starsContainer.appendChild(starEl);
                 
-                // 💡 把計時器裝進陣列中管理
                 let t = setTimeout(() => { 
                     starEl.classList.add('pop'); 
                     if (score > 0) playSound('star'); 
                 }, (index + 1) * 300); 
                 window.starTimeouts.push(t);
             });
+            
             DOM.endEquation.innerText = `${fullStars} 題滿分 + ${halfStars} 題半個 + ${zeroStars} 題需加油\n總成績：(1 × ${fullStars}) + (0.5 × ${halfStars}) + (0 × ${zeroStars}) = ${totalScore} ${unitName}`;
+            
+            // 💡 將複習按鈕與進階挑戰按鈕的判斷邏輯加回來
             if (needsReview) DOM.reviewBtn.classList.remove('hidden'); else DOM.reviewBtn.classList.add('hidden'); 
             if (!gameState.isAdvanced && currentScores.length > 0 && !gameState.isEarlyQuit) DOM.advModeBtn.classList.remove('hidden'); else DOM.advModeBtn.classList.add('hidden');
         }
