@@ -1512,11 +1512,27 @@
             document.getElementById('share-date').innerText = dateString;
             document.getElementById('share-score').innerText = `${totalCorrect} / ${totalQuestions}`;
             
-            // 動態縮放 (從 1.0 倍放大到最高 2.5 倍)
-            let scaleFactor = 1.0 + (accuracy * 1.5); 
+            // 3. 計算圖示放大階級與倍率
+            let scaleFactor = 1.0; // 基礎大小 55px
+
+            if (totalCorrect > 10) {
+                // 超過 10 題後，每多 5 題算一階 (11~15為第1階, 16~20為第2階...)
+                let extraSteps = Math.floor((totalCorrect - 11) / 5) + 1;
+                
+                // 每上升一階，放大 0.4 倍 (約增加 22px)。
+                // 利用 Math.min 設定天花板，最高不超過 3.2 倍 (約等於 176px)
+                scaleFactor = Math.min(1.0 + (extraSteps * 0.4), 3.2);
+            }
+
+            // 4. 判斷是否給予尊榮發光特效 (答對率 >= 95%)
+            let glowEffect = accuracy >= 0.95 ? 'filter: drop-shadow(0px 0px 15px rgba(241, 196, 15, 0.9));' : '';
+
+            // 5. 動態調整容器高度，避免變大的王冠/星星與文字重疊
+            document.getElementById('share-symbol-container').style.minHeight = '180px';
+            
             let symbolHtml = gameState.isAdvanced 
-                ? `<svg viewBox="0 0 24 24" fill="#ffca28" stroke="#f39c12" stroke-width="1.5" stroke-linejoin="round" style="width: 55px; height: 55px; transform: scale(${scaleFactor}); transition: transform 0.5s cubic-bezier(0.175, 0.885, 0.32, 1.275);"><path d="M3 20h18L19 7l-4 5-3-8-3 8-4-5z"/></svg>`
-                : `<svg viewBox="0 0 24 24" fill="#ffca28" stroke="#f39c12" stroke-width="1.5" style="width: 55px; height: 55px; transform: scale(${scaleFactor}); transition: transform 0.5s cubic-bezier(0.175, 0.885, 0.32, 1.275);"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2" /></svg>`;
+                ? `<svg viewBox="0 0 24 24" fill="#ffca28" stroke="#f39c12" stroke-width="1.5" stroke-linejoin="round" style="width: 55px; height: 55px; transform: scale(${scaleFactor}); ${glowEffect} transition: transform 0.5s cubic-bezier(0.175, 0.885, 0.32, 1.275);"><path d="M3 20h18L19 7l-4 5-3-8-3 8-4-5z"/></svg>`
+                : `<svg viewBox="0 0 24 24" fill="#ffca28" stroke="#f39c12" stroke-width="1.5" style="width: 55px; height: 55px; transform: scale(${scaleFactor}); ${glowEffect} transition: transform 0.5s cubic-bezier(0.175, 0.885, 0.32, 1.275);"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2" /></svg>`;
             
             document.getElementById('share-symbol-container').innerHTML = symbolHtml;
             
