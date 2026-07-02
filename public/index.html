@@ -154,11 +154,12 @@
             <button id="install-pwa-btn" class="install-btn hidden">📲 下載成為 APP</button>
         </div>
         
-        <div class="bottom-dock">
-            <div class="cross-promo-container">
-                <a href="https://math-advent.web.app/?utm_source=vocab_adventure&utm_medium=lobby_cross_promo&utm_campaign=internal_traffic" class="btn-math" id="go-to-math-btn">👾 前往數學大冒險 ➕</a>
-                <a href="https://portaly.cc/allankyhou/support" class="coffee-btn" id="coffee-btn" target="_blank">☕ 請作者喝杯咖啡</a>
-            </div>
+        <div class="bottom-dock" style="display: flex; flex-direction: column; gap: 10px;">
+            <button id="share-btn" class="setting-btn hidden" style="background-color: #9b59b6; color: white; box-shadow: 0 5px 0 #8e44ad; width: 100%; margin: 0; margin-bottom: 5px;" onclick="window.openShareScreen()">📸 製作專屬戰報</button>
+            
+            <button id="review-btn" class="setting-btn hidden" style="background-color: #f39c12; color: white; box-shadow: 0 5px 0 #e67e22; width: 100%; margin: 0;" onclick="window.showReviewScreen()">👀 複習不熟單字</button>
+            <button id="adv-mode-btn" class="setting-btn adv-btn hidden" style="width: 100%; margin: 0;" onclick="window.startAdvancedMode()">🚀 挑戰進階模式</button>
+            <button class="restart-btn" style="margin: 0;" onclick="window.showStartScreen()">返回主畫面</button>
         </div>
     </div>
 
@@ -352,6 +353,36 @@
                 這樣就能把遊戲變成專屬 APP，全螢幕遊玩囉！
             </p>
             <button class="close-modal-btn" style="margin-top: 15px; background-color: #45a29e; color: white; border: none;" onclick="document.getElementById('ios-install-modal').classList.add('hidden')">我知道了</button>
+        </div>
+    </div>
+
+    <div id="share-screen" class="screen" style="background: linear-gradient(135deg, #74b9ff, #0984e3); color: white; padding: 0;">
+        <button class="quit-btn" onclick="window.closeShareScreen()" style="background: rgba(255,255,255,0.2); box-shadow: none; color: white;">❌</button>
+        
+        <div style="flex-grow: 1; display: flex; flex-direction: column; align-items: center; justify-content: center; width: 100%; padding: 20px; box-sizing: border-box;">
+            <h1 style="color: white; font-size: 28px; margin-bottom: 20px; text-shadow: 0 4px 10px rgba(0,0,0,0.2);">🏆 挑戰戰報 🏆</h1>
+            
+            <div style="background: white; border-radius: 25px; padding: 30px 20px; width: 100%; max-width: 400px; color: #2c3e50; text-align: center; box-shadow: 0 15px 35px rgba(0,0,0,0.2);">
+                <div style="display: flex; align-items: center; justify-content: center; gap: 15px; margin-bottom: 25px;">
+                    <label for="camera-input" style="cursor: pointer; flex-shrink: 0;">
+                        <div id="photo-preview" style="width: 75px; height: 75px; border-radius: 50%; background: #ecf0f1; border: 3px dashed #bdc3c7; display: flex; align-items: center; justify-content: center; overflow: hidden; box-shadow: 0 4px 10px rgba(0,0,0,0.1);">
+                            <span style="font-size: 28px;">📷</span>
+                        </div>
+                        <input type="file" id="camera-input" accept="image/*" capture="user" style="display: none;" onchange="window.handlePhotoUpload(event)">
+                    </label>
+                    <div style="text-align: left;">
+                        <div id="share-name" style="font-size: 24px; font-weight: bold; color: #2c3e50;"></div>
+                        <div id="share-date" style="font-size: 14px; color: #95a5a6; margin-top: 4px;"></div>
+                    </div>
+                </div>
+                
+                <div id="share-symbol-container" style="height: 140px; display: flex; align-items: center; justify-content: center; margin: 15px 0;"></div>
+                
+                <div style="font-size: 18px; font-weight: bold; color: #7f8c8d; margin-top: 15px;">本次答對題數</div>
+                <div id="share-score" style="font-size: 45px; font-weight: bold; color: #e67e22; letter-spacing: 2px;"></div>
+            </div>
+            
+            <p style="font-size: 15px; color: rgba(255,255,255,0.9); margin-top: 25px; font-weight: bold;">📸 快使用截圖功能，分享輝煌戰果！</p>
         </div>
     </div>
 
@@ -582,6 +613,7 @@
         };
 
         const DOM = {};
+        window.starTimeouts = [];
 
         // 💡 新增：根據單字長度動態調整字體大小，避免長單字溢出螢幕
         function adjustFontSizeByLength(word) {
@@ -1389,29 +1421,47 @@
             confetti.reset(); if (isEarlyQuit) gameState.isEarlyQuit = true; 
             gameState.isActive = false; switchScreen('end-screen'); DOM.starsContainer.innerHTML = ''; 
             
+            // 💡 綁定點擊跳過動畫事件
+            document.getElementById('end-screen').onclick = function() {
+                if (window.starTimeouts && window.starTimeouts.length > 0) {
+                    window.starTimeouts.forEach(clearTimeout);
+                    window.starTimeouts = [];
+                    // 瞬間讓所有還沒彈出來的星星出現
+                    document.querySelectorAll('.star-svg:not(.pop)').forEach(el => el.classList.add('pop'));
+                }
+            };
+
             let currentScores = gameState.isAdvanced ? gameState.advancedScores : gameState.sessionScores;
             let unitName = gameState.isAdvanced ? '皇冠' : '顆星';
+            let shareBtn = document.getElementById('share-btn');
 
             if (gameState.isEarlyQuit) {
-                DOM.endTitle.innerText = "提早結束！"; DOM.endSubtitle.innerText = `你完成了 ${gameState.currentCount} 題：`;
+                DOM.endTitle.innerText = "提早結束！"; DOM.endSubtitle.innerText = `完成了 ${gameState.currentCount - 1} 題：`;
             } else {
                 let modeText = gameState.isFlashcardMode ? "翻牌複習" : (gameState.isAdvanced ? "進階模式" : (gameState.isSequential ? "依序挑戰" : "隨機挑戰"));
                 DOM.endTitle.innerText = `${modeText}完成！`; 
-                DOM.endSubtitle.innerText = gameState.isFlashcardMode ? "這是你這次的記憶力評估報告：" : `按照出題順序，這是你獲得的${unitName}：`;
+                DOM.endSubtitle.innerText = gameState.isFlashcardMode ? "這是這次的記憶力評估報告：" : `按照出題順序，這是獲得的${unitName}：`;
             }
 
+            // 翻牌模式的特殊處理
             if (gameState.isFlashcardMode) {
                 DOM.endEquation.innerText = `🤩 記憶猶新：${gameState.flashcardStats.good} 題\n🤔 好像還行：${gameState.flashcardStats.ok} 題\n😵 有點不熟：${gameState.flashcardStats.bad} 題`;
                 if (gameState.flashcardStats.bad > 0) DOM.reviewBtn.classList.remove('hidden'); else DOM.reviewBtn.classList.add('hidden'); 
                 DOM.advModeBtn.classList.add('hidden');
+                if (shareBtn) shareBtn.classList.add('hidden'); // 翻牌模式暫時不需要分享
                 return; 
             }
 
             let fullStars = 0, halfStars = 0, zeroStars = 0, totalScore = 0; let needsReview = false;
             if (currentScores.length === 0) { 
                 DOM.endEquation.innerText = "這次沒有完成任何題目，下次繼續加油喔！"; 
-                DOM.reviewBtn.classList.add('hidden'); DOM.advModeBtn.classList.add('hidden'); return; 
+                DOM.reviewBtn.classList.add('hidden'); DOM.advModeBtn.classList.add('hidden'); 
+                if (shareBtn) shareBtn.classList.add('hidden');
+                return; 
             }
+
+            if (shareBtn) shareBtn.classList.remove('hidden');
+            window.starTimeouts = [];
 
             currentScores.forEach((score, index) => {
                 totalScore += score; if (score === 1) fullStars++; else if (score === 0.5) halfStars++; else zeroStars++;
@@ -1422,12 +1472,69 @@
                     ? `<svg class="star-svg" viewBox="0 0 24 24" fill="${fillId}" stroke="${strokeColor}" stroke-width="2" stroke-linejoin="round"><path d="M3 20h18L19 7l-4 5-3-8-3 8-4-5z"/></svg>`
                     : `<svg class="star-svg" viewBox="0 0 24 24" fill="${fillId}" stroke="${strokeColor}" stroke-width="2"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2" /></svg>`;
                 let wrapper = document.createElement('div'); wrapper.innerHTML = svgHTML; let starEl = wrapper.firstElementChild; DOM.starsContainer.appendChild(starEl);
-                setTimeout(() => { starEl.classList.add('pop'); if (score > 0) playSound('star'); }, (index + 1) * 300); 
+                
+                // 💡 把計時器裝進陣列中管理
+                let t = setTimeout(() => { 
+                    starEl.classList.add('pop'); 
+                    if (score > 0) playSound('star'); 
+                }, (index + 1) * 300); 
+                window.starTimeouts.push(t);
             });
             DOM.endEquation.innerText = `${fullStars} 題滿分 + ${halfStars} 題半個 + ${zeroStars} 題需加油\n總成績：(1 × ${fullStars}) + (0.5 × ${halfStars}) + (0 × ${zeroStars}) = ${totalScore} ${unitName}`;
             if (needsReview) DOM.reviewBtn.classList.remove('hidden'); else DOM.reviewBtn.classList.add('hidden'); 
             if (!gameState.isAdvanced && currentScores.length > 0 && !gameState.isEarlyQuit) DOM.advModeBtn.classList.remove('hidden'); else DOM.advModeBtn.classList.add('hidden');
         }
+
+        window.openShareScreen = function() {
+            // 停止結算畫面的動畫
+            if (window.starTimeouts && window.starTimeouts.length > 0) {
+                window.starTimeouts.forEach(clearTimeout);
+                window.starTimeouts = [];
+                document.querySelectorAll('.star-svg:not(.pop)').forEach(el => el.classList.add('pop'));
+            }
+
+            let currentScores = gameState.isAdvanced ? gameState.advancedScores : gameState.sessionScores;
+            let fullStars = currentScores.filter(s => s === 1).length;
+            let halfStars = currentScores.filter(s => s === 0.5).length;
+            let totalCorrect = fullStars + (halfStars * 0.5); 
+            let totalQuestions = gameState.isEarlyQuit ? (gameState.currentCount - 1) : gameState.maxQuestions;
+            let accuracy = totalQuestions > 0 ? (totalCorrect / totalQuestions) : 0;
+            
+            document.getElementById('share-name').innerText = window.currentPlayerName || "神秘冒險家";
+            let now = new Date();
+            let dateString = now.toLocaleString('zh-TW', { year: 'numeric', month: '2-digit', day: '2-digit', hour: '2-digit', minute: '2-digit', hour12: false });
+            document.getElementById('share-date').innerText = dateString;
+            document.getElementById('share-score').innerText = `${totalCorrect} / ${totalQuestions}`;
+            
+            // 動態縮放 (從 1.0 倍放大到最高 2.5 倍)
+            let scaleFactor = 1.0 + (accuracy * 1.5); 
+            let symbolHtml = gameState.isAdvanced 
+                ? `<svg viewBox="0 0 24 24" fill="#ffca28" stroke="#f39c12" stroke-width="1.5" stroke-linejoin="round" style="width: 55px; height: 55px; transform: scale(${scaleFactor}); transition: transform 0.5s cubic-bezier(0.175, 0.885, 0.32, 1.275);"><path d="M3 20h18L19 7l-4 5-3-8-3 8-4-5z"/></svg>`
+                : `<svg viewBox="0 0 24 24" fill="#ffca28" stroke="#f39c12" stroke-width="1.5" style="width: 55px; height: 55px; transform: scale(${scaleFactor}); transition: transform 0.5s cubic-bezier(0.175, 0.885, 0.32, 1.275);"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2" /></svg>`;
+            
+            document.getElementById('share-symbol-container').innerHTML = symbolHtml;
+            
+            // 重置相機與預覽區塊
+            document.getElementById('photo-preview').innerHTML = '<span style="font-size: 28px;">📷</span>';
+            document.getElementById('camera-input').value = '';
+            
+            switchScreen('share-screen');
+        };
+        
+        window.closeShareScreen = function() {
+            switchScreen('end-screen');
+        };
+        
+        window.handlePhotoUpload = function(event) {
+            const file = event.target.files[0];
+            if (file) {
+                const reader = new FileReader();
+                reader.onload = function(e) {
+                    document.getElementById('photo-preview').innerHTML = `<img src="${e.target.result}" style="width: 100%; height: 100%; object-fit: cover;">`;
+                };
+                reader.readAsDataURL(file);
+            }
+        };
 
         window.showReviewScreen = function() {
             switchScreen('review-screen'); DOM.reviewList.innerHTML = ''; 
