@@ -154,12 +154,11 @@
             <button id="install-pwa-btn" class="install-btn hidden">📲 下載成為 APP</button>
         </div>
         
-        <div class="bottom-dock" style="display: flex; flex-direction: column; gap: 10px;">
-            <button id="share-btn" class="setting-btn hidden" style="background-color: #9b59b6; color: white; box-shadow: 0 5px 0 #8e44ad; width: 100%; margin: 0; margin-bottom: 5px;" onclick="window.openShareScreen()">📸 製作專屬戰報</button>
-            
-            <button id="review-btn" class="setting-btn hidden" style="background-color: #f39c12; color: white; box-shadow: 0 5px 0 #e67e22; width: 100%; margin: 0;" onclick="window.showReviewScreen()">👀 複習不熟單字</button>
-            <button id="adv-mode-btn" class="setting-btn adv-btn hidden" style="width: 100%; margin: 0;" onclick="window.startAdvancedMode()">🚀 挑戰進階模式</button>
-            <button class="restart-btn" style="margin: 0;" onclick="window.showStartScreen()">返回主畫面</button>
+        <div class="bottom-dock">
+            <div class="cross-promo-container">
+                <a href="https://math-advent.web.app/?utm_source=vocab_adventure&utm_medium=lobby_cross_promo&utm_campaign=internal_traffic" class="btn-math" id="go-to-math-btn">👾 前往數學大冒險 ➕</a>
+                <a href="https://portaly.cc/allankyhou/support" class="coffee-btn" id="coffee-btn" target="_blank">☕ 請作者喝杯咖啡</a>
+            </div>
         </div>
     </div>
 
@@ -301,10 +300,12 @@
             <div id="end-equation" class="equation-box"></div>
         </div>
         
-        <div class="bottom-dock" style="display: flex; flex-direction: column; gap: 10px;">
+        div class="bottom-dock" style="display: flex; flex-direction: column; gap: 10px;">
             <button id="review-btn" class="setting-btn hidden" style="background-color: #f39c12; color: white; box-shadow: 0 5px 0 #e67e22; width: 100%; margin: 0;" onclick="window.showReviewScreen()">👀 複習不熟單字</button>
             <button id="adv-mode-btn" class="setting-btn adv-btn hidden" style="width: 100%; margin: 0;" onclick="window.startAdvancedMode()">🚀 挑戰進階模式</button>
+            
             <button id="share-btn" class="setting-btn hidden" style="background-color: #9b59b6; color: white; box-shadow: 0 5px 0 #8e44ad; width: 100%; margin: 0;" onclick="window.openShareScreen()">📸 製作專屬戰報</button>
+            
             <button class="restart-btn" style="margin: 0;" onclick="window.showStartScreen()">返回主畫面</button>
         </div>
     </div>
