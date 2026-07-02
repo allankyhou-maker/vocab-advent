@@ -650,6 +650,7 @@
                 reviewList: document.getElementById('review-list'), seqStart: document.getElementById('seq-start'),
                 seqEnd: document.getElementById('seq-end'), seqReviewTitle: document.getElementById('seq-review-title'),
                 bankList: document.getElementById('bank-list')
+                shareBtn: document.getElementById('share-btn')
             });
             loadWordBanks();
         });
@@ -1433,7 +1434,6 @@
 
             let currentScores = gameState.isAdvanced ? gameState.advancedScores : gameState.sessionScores;
             let unitName = gameState.isAdvanced ? '皇冠' : '顆星';
-            let shareBtn = document.getElementById('share-btn');
 
             if (gameState.isEarlyQuit) {
                 DOM.endTitle.innerText = "提早結束！"; DOM.endSubtitle.innerText = `完成了 ${gameState.currentCount - 1} 題：`;
@@ -1448,7 +1448,7 @@
                 DOM.endEquation.innerText = `🤩 記憶猶新：${gameState.flashcardStats.good} 題\n🤔 好像還行：${gameState.flashcardStats.ok} 題\n😵 有點不熟：${gameState.flashcardStats.bad} 題`;
                 if (gameState.flashcardStats.bad > 0) DOM.reviewBtn.classList.remove('hidden'); else DOM.reviewBtn.classList.add('hidden'); 
                 DOM.advModeBtn.classList.add('hidden');
-                if (shareBtn) shareBtn.classList.add('hidden'); // 翻牌模式暫時不需要分享
+                if (DOM.shareBtn) DOM.shareBtn.classList.add('hidden'); // 💡 改用 DOM.shareBtn
                 return; 
             }
 
@@ -1456,11 +1456,12 @@
             if (currentScores.length === 0) { 
                 DOM.endEquation.innerText = "這次沒有完成任何題目，下次繼續加油喔！"; 
                 DOM.reviewBtn.classList.add('hidden'); DOM.advModeBtn.classList.add('hidden'); 
-                if (shareBtn) shareBtn.classList.add('hidden');
+                if (DOM.shareBtn) DOM.shareBtn.classList.add('hidden'); // 💡 改用 DOM.shareBtn
                 return; 
             }
 
-            if (shareBtn) shareBtn.classList.remove('hidden');
+            // 💡 確保有完成題目，就一定會顯示按鈕
+            if (DOM.shareBtn) DOM.shareBtn.classList.remove('hidden'); 
             window.starTimeouts = [];
 
             currentScores.forEach((score, index) => {
