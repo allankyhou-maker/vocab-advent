@@ -1444,7 +1444,6 @@
                 DOM.endSubtitle.innerText = gameState.isFlashcardMode ? "這是這次的記憶力評估報告：" : `按照出題順序，這是獲得的${unitName}：`;
             }
 
-            // 翻牌模式的特殊處理
             if (gameState.isFlashcardMode) {
                 DOM.endEquation.innerText = `🤩 記憶猶新：${gameState.flashcardStats.good} 題\n🤔 好像還行：${gameState.flashcardStats.ok} 題\n😵 有點不熟：${gameState.flashcardStats.bad} 題`;
                 if (gameState.flashcardStats.bad > 0) DOM.reviewBtn.classList.remove('hidden'); else DOM.reviewBtn.classList.add('hidden'); 
@@ -1454,7 +1453,6 @@
             }
 
             let fullStars = 0, halfStars = 0, zeroStars = 0, totalScore = 0; let needsReview = false;
-            
             if (currentScores.length === 0) { 
                 DOM.endEquation.innerText = "這次沒有完成任何題目，下次繼續加油喔！"; 
                 DOM.reviewBtn.classList.add('hidden'); DOM.advModeBtn.classList.add('hidden'); 
@@ -1462,31 +1460,55 @@
                 return; 
             }
 
-            // 💡 只要有答題，就顯示分享按鈕
             if (DOM.shareBtn) DOM.shareBtn.classList.remove('hidden'); 
             window.starTimeouts = [];
+            
+            let totalQuestions = currentScores.length;
+            let accuracy = totalQuestions > 0 ? (currentScores.filter(s => s === 1).length + (currentScores.filter(s => s === 0.5).length * 0.5)) / totalQuestions : 0;
 
-            currentScores.forEach((score, index) => {
-                totalScore += score; if (score === 1) fullStars++; else if (score === 0.5) halfStars++; else zeroStars++;
-                if (score < 1) needsReview = true; // 只要有非滿分的題目，就需要複習
+            // 👇 核心邏輯：判斷題數小於 50 還是大於等於 50 👇
+            if (totalQuestions < 50) {
+                // <50 題：動態矩陣排列 (例如 49題會是 7x7，20題會是 5x4)
+                let cols = Math.ceil(Math.sqrt(totalQuestions));
+                DOM.starsContainer.style.cssText = `display: grid; grid-template-columns: repeat(${cols}, 1fr); gap: 6px; justify-items: center; align-items: center; width: 100%; max-width: 350px; margin: 15px auto;`;
                 
-                let fillId = score === 0.5 ? 'url(#half-star-gradient)' : (score === 1 ? '#ffca28' : '#ecf0f1'); 
-                let strokeColor = score === 0 ? '#bdc3c7' : '#f39c12';
+                currentScores.forEach((score, index) => {
+                    totalScore += score; if (score === 1) fullStars++; else if (score === 0.5) halfStars++; else zeroStars++;
+                    if (score < 1) needsReview = true; 
+                    
+                    let fillId = score === 0.5 ? 'url(#half-star-gradient)' : (score === 1 ? '#ffca28' : '#ecf0f1'); 
+                    let strokeColor = score === 0 ? '#bdc3c7' : '#f39c12';
+                    let svgHTML = gameState.isAdvanced 
+                        ? `<svg class="star-svg" viewBox="0 0 24 24" fill="${fillId}" stroke="${strokeColor}" stroke-width="2" stroke-linejoin="round" style="width: 100%; max-width: 45px; aspect-ratio: 1/1;"><path d="M3 20h18L19 7l-4 5-3-8-3 8-4-5z"/></svg>`
+                        : `<svg class="star-svg" viewBox="0 0 24 24" fill="${fillId}" stroke="${strokeColor}" stroke-width="2" style="width: 100%; max-width: 45px; aspect-ratio: 1/1;"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2" /></svg>`;
+                    
+                    let wrapper = document.createElement('div'); wrapper.innerHTML = svgHTML; let starEl = wrapper.firstElementChild; DOM.starsContainer.appendChild(starEl);
+                    
+                    let t = setTimeout(() => { starEl.classList.add('pop'); if (score > 0) playSound('star'); }, (index + 1) * 200); 
+                    window.starTimeouts.push(t);
+                });
+            } else {
+                // >=50 題：單一巨無霸圖示滿版呈現
+                DOM.starsContainer.style.cssText = `display: flex; justify-content: center; align-items: center; width: 100%; min-height: 180px; margin: 15px 0;`;
+                
+                currentScores.forEach(score => {
+                    totalScore += score; if (score === 1) fullStars++; else if (score === 0.5) halfStars++; else zeroStars++;
+                    if (score < 1) needsReview = true; 
+                });
+
+                let glowEffect = accuracy >= 0.95 ? 'filter: drop-shadow(0px 0px 20px rgba(241, 196, 15, 0.95));' : '';
                 let svgHTML = gameState.isAdvanced 
-                    ? `<svg class="star-svg" viewBox="0 0 24 24" fill="${fillId}" stroke="${strokeColor}" stroke-width="2" stroke-linejoin="round"><path d="M3 20h18L19 7l-4 5-3-8-3 8-4-5z"/></svg>`
-                    : `<svg class="star-svg" viewBox="0 0 24 24" fill="${fillId}" stroke="${strokeColor}" stroke-width="2"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2" /></svg>`;
+                    ? `<svg class="star-svg" viewBox="0 0 24 24" fill="#ffca28" stroke="#f39c12" stroke-width="1.5" stroke-linejoin="round" style="width: 180px; height: 180px; ${glowEffect}"><path d="M3 20h18L19 7l-4 5-3-8-3 8-4-5z"/></svg>`
+                    : `<svg class="star-svg" viewBox="0 0 24 24" fill="#ffca28" stroke="#f39c12" stroke-width="1.5" style="width: 180px; height: 180px; ${glowEffect}"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2" /></svg>`;
+                
                 let wrapper = document.createElement('div'); wrapper.innerHTML = svgHTML; let starEl = wrapper.firstElementChild; DOM.starsContainer.appendChild(starEl);
                 
-                let t = setTimeout(() => { 
-                    starEl.classList.add('pop'); 
-                    if (score > 0) playSound('star'); 
-                }, (index + 1) * 300); 
+                let t = setTimeout(() => { starEl.classList.add('pop'); playSound('star'); }, 300);
                 window.starTimeouts.push(t);
-            });
+            }
             
             DOM.endEquation.innerText = `${fullStars} 題滿分 + ${halfStars} 題半個 + ${zeroStars} 題需加油\n總成績：(1 × ${fullStars}) + (0.5 × ${halfStars}) + (0 × ${zeroStars}) = ${totalScore} ${unitName}`;
             
-            // 💡 將複習按鈕與進階挑戰按鈕的判斷邏輯加回來
             if (needsReview) DOM.reviewBtn.classList.remove('hidden'); else DOM.reviewBtn.classList.add('hidden'); 
             if (!gameState.isAdvanced && currentScores.length > 0 && !gameState.isEarlyQuit) DOM.advModeBtn.classList.remove('hidden'); else DOM.advModeBtn.classList.add('hidden');
         }
@@ -1512,31 +1534,36 @@
             document.getElementById('share-date').innerText = dateString;
             document.getElementById('share-score').innerText = `${totalCorrect} / ${totalQuestions}`;
             
-            // 3. 計算圖示放大階級與倍率
-            let scaleFactor = 1.0; // 基礎大小 55px
-
-            if (totalCorrect > 10) {
-                // 超過 10 題後，每多 5 題算一階 (11~15為第1階, 16~20為第2階...)
-                let extraSteps = Math.floor((totalCorrect - 11) / 5) + 1;
+            let container = document.getElementById('share-symbol-container');
+            container.innerHTML = '';
+            
+            // 👇 核心邏輯：判斷題數小於 50 還是大於等於 50 👇
+            if (totalQuestions < 50) {
+                // <50 題：動態矩陣排列
+                let cols = Math.ceil(Math.sqrt(totalQuestions));
+                container.style.cssText = `display: grid; grid-template-columns: repeat(${cols}, 1fr); gap: 6px; justify-items: center; align-items: center; width: 100%; max-width: 320px; margin: 15px auto; min-height: 140px;`;
                 
-                // 每上升一階，放大 0.4 倍 (約增加 22px)。
-                // 利用 Math.min 設定天花板，最高不超過 3.2 倍 (約等於 176px)
-                scaleFactor = Math.min(1.0 + (extraSteps * 0.4), 3.2);
+                let htmlStr = "";
+                currentScores.forEach(score => {
+                    let fillId = score === 0.5 ? 'url(#half-star-gradient)' : (score === 1 ? '#ffca28' : '#ecf0f1'); 
+                    let strokeColor = score === 0 ? '#bdc3c7' : '#f39c12';
+                    let svgHTML = gameState.isAdvanced 
+                        ? `<svg viewBox="0 0 24 24" fill="${fillId}" stroke="${strokeColor}" stroke-width="1.5" stroke-linejoin="round" style="width: 100%; max-width: 45px; aspect-ratio: 1/1;"><path d="M3 20h18L19 7l-4 5-3-8-3 8-4-5z"/></svg>`
+                        : `<svg viewBox="0 0 24 24" fill="${fillId}" stroke="${strokeColor}" stroke-width="1.5" style="width: 100%; max-width: 45px; aspect-ratio: 1/1;"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2" /></svg>`;
+                    htmlStr += svgHTML;
+                });
+                container.innerHTML = htmlStr;
+            } else {
+                // >=50 題：單一巨無霸發光圖示
+                container.style.cssText = `display: flex; justify-content: center; align-items: center; width: 100%; min-height: 180px; margin: 15px auto;`;
+                let glowEffect = accuracy >= 0.95 ? 'filter: drop-shadow(0px 0px 20px rgba(241, 196, 15, 0.95));' : '';
+                
+                let svgHTML = gameState.isAdvanced 
+                    ? `<svg viewBox="0 0 24 24" fill="#ffca28" stroke="#f39c12" stroke-width="1.5" stroke-linejoin="round" style="width: 180px; height: 180px; ${glowEffect}"><path d="M3 20h18L19 7l-4 5-3-8-3 8-4-5z"/></svg>`
+                    : `<svg viewBox="0 0 24 24" fill="#ffca28" stroke="#f39c12" stroke-width="1.5" style="width: 180px; height: 180px; ${glowEffect}"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2" /></svg>`;
+                container.innerHTML = svgHTML;
             }
-
-            // 4. 判斷是否給予尊榮發光特效 (答對率 >= 95%)
-            let glowEffect = accuracy >= 0.95 ? 'filter: drop-shadow(0px 0px 15px rgba(241, 196, 15, 0.9));' : '';
-
-            // 5. 動態調整容器高度，避免變大的王冠/星星與文字重疊
-            document.getElementById('share-symbol-container').style.minHeight = '180px';
             
-            let symbolHtml = gameState.isAdvanced 
-                ? `<svg viewBox="0 0 24 24" fill="#ffca28" stroke="#f39c12" stroke-width="1.5" stroke-linejoin="round" style="width: 55px; height: 55px; transform: scale(${scaleFactor}); ${glowEffect} transition: transform 0.5s cubic-bezier(0.175, 0.885, 0.32, 1.275);"><path d="M3 20h18L19 7l-4 5-3-8-3 8-4-5z"/></svg>`
-                : `<svg viewBox="0 0 24 24" fill="#ffca28" stroke="#f39c12" stroke-width="1.5" style="width: 55px; height: 55px; transform: scale(${scaleFactor}); ${glowEffect} transition: transform 0.5s cubic-bezier(0.175, 0.885, 0.32, 1.275);"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2" /></svg>`;
-            
-            document.getElementById('share-symbol-container').innerHTML = symbolHtml;
-            
-            // 重置相機與預覽區塊
             document.getElementById('photo-preview').innerHTML = '<span style="font-size: 28px;">📷</span>';
             document.getElementById('camera-input').value = '';
             
